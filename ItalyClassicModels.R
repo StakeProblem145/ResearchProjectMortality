@@ -34,8 +34,7 @@ plot(RHRes)
 
 
 
-
-### DT ###
+#Preparation of data
 dx_mdl <- LCFit$Ext * exp(LCFit$ax + LCFit$bx %*% LCFit$kt)
 
 HMD_df <- filter(HMD_df, Year >= years.fit[1] & Year <= years.fit[length(years.fit)] & Gender == "Male")
@@ -44,9 +43,16 @@ HMD_df$dx <- as.vector(t(dx_mdl))
 HMD_df <- HMD_df %>%
   mutate("psi" = Deaths/dx)
 
-
+### DT ###
 dt <- rpart(psi ~ Age + Year,
             data = HMD_df, method = "poisson",
             cp = 0.003)
 
 prp(dt)
+
+
+### GB ###
+gbm1 <- gbm(psi ~ Age + Year,  "gaussian", data = HMD_df, n.trees = 5000, interaction.depth = 6, 
+            shrinkage = 0.001,  cv.folds = 5)
+
+tree_100 <- pretty(gbm1, i.tree = 1)

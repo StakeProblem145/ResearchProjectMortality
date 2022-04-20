@@ -3,8 +3,6 @@ library(demography)
 library(tidyverse)
 library(rpart)
 library(rpart.plot)
-install.packages("gbm")
-libraray(gbm)
 
 
 #ITALYdataRaw <- hmd.mx(country="ITA", username = "lstake@hs-koblenz.de", password = "1650394322")
@@ -36,7 +34,6 @@ plot(RHRes)
 
 
 
-
 #Preparation of data
 dx_mdl <- LCFit$Ext * exp(LCFit$ax + LCFit$bx %*% LCFit$kt)
 
@@ -59,4 +56,3 @@ gbm1 <- gbm(psi ~ Age + Year,  "gaussian", data = HMD_df, n.trees = 5000, intera
             shrinkage = 0.001,  cv.folds = 5)
 
 tree_100 <- pretty(gbm1, i.tree = 1)
-

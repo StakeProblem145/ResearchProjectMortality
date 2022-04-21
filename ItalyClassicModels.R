@@ -3,9 +3,8 @@ library(demography)
 library(tidyverse)
 library(rpart)
 library(rpart.plot)
-install.packages("gbm")
-libraray(gbm)
-
+library(gbm)
+library(randomForest)
 
 #ITALYdataRaw <- hmd.mx(country="ITA", username = "lstake@hs-koblenz.de", password = "1650394322")
 load("data/raw/ITALYdataRaw.RDA")
@@ -36,7 +35,6 @@ plot(RHRes)
 
 
 
-
 #Preparation of data
 dx_mdl <- LCFit$Ext * exp(LCFit$ax + LCFit$bx %*% LCFit$kt)
 
@@ -53,10 +51,20 @@ dt <- rpart(psi ~ Age + Year,
 
 prp(dt)
 
+### RF ###
+rf <- randomForest(formula = Age + Year~., data = HMD_df, ntree=200)
+plot(rf, type="l")
+rf1 <- randomForest(formula = Age + Year~., data = HMD_df, ntree=300)
+plot(rf1, type="l")
 
 ### GB ###
 gbm1 <- gbm(psi ~ Age + Year,  "gaussian", data = HMD_df, n.trees = 5000, interaction.depth = 6, 
             shrinkage = 0.001,  cv.folds = 5)
+tree_1 <- pretty.gbm.tree(gbm1, i.tree = 1)
+plot.gbm(gbm1,1:2,5)
+plot.gbm(gbm1,1:2,50)
+plot.gbm(gbm1,1:2,500)
+plot.gbm(gbm1,1:2,5000)
+summary.gbm(gbm1, n.trees = 1)
 
-tree_100 <- pretty(gbm1, i.tree = 1)
 

@@ -71,11 +71,36 @@ plot(rf1, type="l")
 ### GB ###
 gbm1 <- gbm(psi ~ Age + Year + Cohort,  "gaussian", data = HMD_df, n.trees = 5000, interaction.depth = 6, 
             shrinkage = 0.001,  cv.folds = 5)
+
+#pick a specific tree
 tree_1 <- pretty.gbm.tree(gbm1, i.tree = 1)
-plot.gbm(gbm1,1:2,5)
-plot.gbm(gbm1,1:2,50)
-plot.gbm(gbm1,1:3,500)
-plot.gbm(gbm1,1:3,5000)
-summary.gbm(gbm1, n.trees = 1)
 
+#relative influences depending on number of trees
+summary.gbm(gbm1, n.trees = 5)
+summary.gbm(gbm1, n.trees = 50)
+summary.gbm(gbm1, n.trees = 500)
+summary.gbm(gbm1, n.trees = 5000)
 
+#gradient boosting adds weak learners to minimize Loss
+plot(gbm1, i.var = 1:2, n.trees = 5)
+plot(gbm1, i.var = 1:2, n.trees = 50)
+plot(gbm1, i.var = 1:2, n.trees = 500)
+plot(gbm1, i.var = 1:2, n.trees = 5000)
+
+#Determine optimal number of trees/iterations
+#using 5-fold cross-validation
+best.iter <- gbm.perf(gbm1, method = "cv")
+print(best.iter)
+
+#univariate partial dependence plots
+plot(gbm1, i.var = 1, n.trees = best.iter)
+plot(gbm1, i.var = 2, n.trees = best.iter)
+plot(gbm1, i.var = 3, n.trees = best.iter)
+
+#bivariate partial dependence plots
+plot(gbm1, i.var = c("Age", "Year"), n.trees = best.iter)
+plot(gbm1, i.var = c("Cohort", "Year"), n.trees = best.iter)
+plot(gbm1, i.var = c("Age", "Cohort"), n.trees = best.iter)
+
+#trivariate partial dependence plots
+plot(gbm1, i.var = 1:3, n.trees = best.iter)

@@ -65,9 +65,10 @@ dt <- rpart(psi ~ Age + Year + Cohort,
 prp(dt)
 
 ### RF ###
-rf <- randomForest(formula = Age + Year + Cohort~., data = HMD_df_filtered, ntree=200)
+dev.off()
+rf <- randomForest(formula = Age + Year + Cohort ~ psi, data = HMD_df_filtered, ntree=200)
 plot(rf, type="l")
-rf1 <- randomForest(formula = Age + Year~., data = HMD_df_filtered, ntree=300)
+rf1 <- randomForest(formula = Age + Year + Cohort ~ psi, data = HMD_df_filtered, ntree=300)
 plot(rf1, type="l")
 
 ### GB ###

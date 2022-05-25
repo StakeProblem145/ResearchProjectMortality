@@ -10,6 +10,7 @@ library(randomForest)
 load("data/raw/ITALYdataRaw.RDA")
 load("data/processed/Italy_HMD_df.RDA")
 
+dev.off()
 #Ages and Years for Fitting and Forecasting
 ITALYdata <- StMoMoData(ITALYdataRaw, series = "male")
 ages_fit <- 30:100

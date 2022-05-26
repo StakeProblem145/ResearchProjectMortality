@@ -1,9 +1,7 @@
-library(keras)
-library(tfdatasets)
 library(tidyverse)
-library(scales)
-library(splitstackshape)
 library(data.table)
+library(keras)
+library(tfruns)
 
 load("data/processed/Italy_HMD_df.RDA")
 
@@ -79,96 +77,25 @@ y_test <- test[, "log_mortality"]
 y_test_1st <- as.matrix(y_test)
 
 
-build_model <- function() {
-  
-  Year <- layer_input(shape=c(1),dtype='float32',name='Year')
-  Age <- layer_input(shape=c(1),dtype='int32',name='Age')
-  Gender <- layer_input(shape=c(1),dtype='int32',name='Gender')
-  
-  ##### set up the embedding layer of the neural nets
-  
-  
-  Age_embed <- Age %>% 
-    layer_embedding(input_dim = 101,output_dim=5,input_length=1,name='Age_embed') %>% 
-    keras::layer_flatten()
-  
-  Gender_embed <- Gender %>% 
-    layer_embedding(input_dim=2,output_dim=5,input_length = 1,name='Gender_embed') %>% 
-    keras::layer_flatten()
-  
-  
-  ##### merge all the feature vectors 
-  
-  features <- layer_concatenate(list(Year,Age_embed,Gender_embed)) 
-  
-  middle<-features 
-  
-  for (i in (1: FLAGS$layers)){  
-    middle <- middle %>% 
-      layer_dense(units=FLAGS$neurons,activation=FLAGS$activation) %>% 
-      layer_batch_normalization() %>% 
-      layer_dropout(FLAGS$dropout)      
-  }  
-  
-  
-  ##### set up the output layer
-  
-  main_output <- layer_concatenate(list(features,middle)) %>% 
-    layer_dense(units=FLAGS$neurons,activation=FLAGS$activation) %>%
-    layer_batch_normalization() %>% 
-    layer_dropout(FLAGS$dropout)%>% 
-    layer_dense(units=1,name='main_output')
-  
-  #### set up the model combining input layers and output layer
-  
-  model <- keras_model(inputs=c(Year,Age,Gender),outputs=c(main_output))
-  
-  
-  model %>% compile(
-    optimizer_adam(learning_rate = FLAGS$learning_rate),
-    loss='mse',
-    metrics=c("accuracy", 'mae')
-  )
-  model
-}
 
-
-FLAGS <- list( 
-  layers = c(3),
-  dropout = c(0.01),
-  neurons = c(128),
-  batchsize = c(400),
-  learning_rate = c(0.05),
-  patience = c(35),
-  pats = c(20),
+par <- list( 
+  layers = c(2),                 # c(3,6,9),
+  dropout = c(0.01),             # c(0.01,0.03,0.05,0.07),
+  neurons = c(128),              # c(128,160,192,224,256)
+  epochs = c(100),               # 
+  batchsize = c(400),            # c(400,800,1200),
+  lr = c(0.05),                  # c(0.05,0.1,0.15),
+  patience = c(45),              # c(35,45),
+  pats = c(30),                  # c(20,30),
   activation = c("relu")  
 )
 
+runs <- tuning_run('nn_mortality.R', runs_dir = 'D_tuning', sample = 0.05, flags = par)
 
 
-model <- build_model()
-
-early_stop <- callback_early_stopping(monitor = 'val_loss', patience = FLAGS$patience)
-
-lr_reducer <- callback_reduce_lr_on_plateau(monitor = 'val_loss', factor = 0.1,
-                                            patience = FLAGS$pats, verbose = 0, mode = 'min',
-                                            min_delta = 1e-04, cooldown = 0, min_lr = 0)
-
-
-history <- model %>% fit(
-  x = X_dev,
-  y = y_dev,
-  batch_size = FLAGS$batchsize,
-  epoch = 50,
-  validation_data = list(X_val, y_val),
-  verbose = 1,
-  callbacks = list(early_stop,lr_reducer)
-)
-
-score <- model %>% evaluate(X_test_1st, y_test_1st, verbose = 0)
 
 #### After the training we rank the performance of all hyperparameter search runs by validation loss in ascending order.
 
 results <- ls_runs(order = metric_val_loss, decreasing= F, runs_dir = 'D_tuning')
-
 results <- select(results,-c(output))
+

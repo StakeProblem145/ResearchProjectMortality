@@ -26,7 +26,7 @@ HMD_df<-HMD_df %>% select(Gender_cat,Age_cat,Year,Gender,Age, log_mortality, mor
 
 
 
-training <-dplyr::filter(HMD_df,Year%in%1956:2005)
+training <-dplyr::filter(HMD_df,Year%in%1900:2005)
 
 col_vector <- c("Year","Age","Gender","log_mortality")
 Training<- training %>% select(one_of(col_vector))
@@ -79,11 +79,11 @@ y_test_1st <- as.matrix(y_test)
 
 
 par <- list( 
-  layers = c(2),                 # c(3,6,9),
-  dropout = c(0.01),             # c(0.01,0.03,0.05,0.07),
+  layers = c(3),                 # c(3,6,9),
+  dropout = c(0.05),             # c(0.01,0.03,0.05,0.07),
   neurons = c(128),              # c(128,160,192,224,256)
-  epochs = c(100),               # 
-  batchsize = c(400),            # c(400,800,1200),
+  epochs = c(250),               # 
+  batchsize = c(800),            # c(400,800,1200),
   lr = c(0.05),                  # c(0.05,0.1,0.15),
   patience = c(45),              # c(35,45),
   pats = c(30),                  # c(20,30),

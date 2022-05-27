@@ -95,4 +95,6 @@ score <- model %>% evaluate(X_test_1st, y_test_1st, verbose = 0)
 
 save_model_hdf5(model, 'model.h5')
 
+save(results, file = "results_nn.RDA")
+
 # cat('Test loss:', score$loss)

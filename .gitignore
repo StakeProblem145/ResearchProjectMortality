@@ -27,3 +27,6 @@ vignettes/*.pdf
 # R Environment Variables
 .Renviron
 ResearchProjectMortality.Rproj
+model.h5
+*D_tuning/**
+/D_tuning/

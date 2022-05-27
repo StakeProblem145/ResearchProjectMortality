@@ -97,3 +97,24 @@ runs <- tuning_run('nn_mortality.R', runs_dir = 'D_tuning', sample = 0.05, flags
 results <- ls_runs(order = metric_val_loss, decreasing= F, runs_dir = 'D_tuning')
 results <- select(results,-c(output))
 
+
+
+
+id<-results[1,1]
+path<-file.path(getwd(),id,"model.h5")
+
+#### Load the best performing model
+
+model <- load_model_hdf5(path)
+summary(model)
+
+predicted_log_mortality<- replicate(dim(y_test_1st)[1], 0)
+
+
+predicted_log_mortality <- model %>% predict(X_test_1st)+predicted_log_mortality
+predicted_log_mortality <- predicted_log_mortality/length(id)
+
+NN_prediction<- cbind(pred_raw,predicted_log_mortality)
+NN_prediction<-NN_prediction %>% mutate(NN_mortality=exp(predicted_log_mortality))
+
+sample_n(NN_prediction,6)

@@ -32,7 +32,7 @@ build_model <- function() {
   
   features <- layer_concatenate(list(Year,Age_embed,Gender_embed)) 
   
-  middle<-features 
+  middle <- features 
   
   for (i in (1: FLAGS$layers)){  
     middle <- middle %>% 

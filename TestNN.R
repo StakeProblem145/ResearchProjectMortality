@@ -47,8 +47,6 @@ y_validation <- val[, "log_mortality"]
 y_val <- as.matrix(y_validation)
 
 
-
-
 train<-setdiff(Training,val)
 
 #### Prepare the input features to be fed into the neural nets and convert them into arrays
@@ -79,15 +77,15 @@ y_test_1st <- as.matrix(y_test)
 
 
 par <- list( 
-  layers = c(3),                 # c(3,6,9),
-  dropout = c(0.05),             # c(0.01,0.03,0.05,0.07),
-  neurons = c(128),              # c(128,160,192,224,256)
+  layers = c(3,6,9),                 # c(3,6,9),
+  dropout = c(0.01,0.03,0.05,0.07),             # c(0.01,0.03,0.05,0.07),
+  neurons = c(128,160,192,224,256),              # c(128,160,192,224,256)
   epochs = c(250),               # 
-  batchsize = c(800),            # c(400,800,1200),
-  lr = c(0.05),                  # c(0.05,0.1,0.15),
-  patience = c(45),              # c(35,45),
-  pats = c(30),                  # c(20,30),
-  activation = c("relu")  
+  batchsize = c(400,800,1200),            # c(400,800,1200),
+  lr = c(0.05,0.1,0.15),                  # c(0.05,0.1,0.15),
+  patience = c(35,45),              # c(35,45),
+  pats = c(20,30),                  # c(20,30),
+  activation = c("relu")         # c("relu") 
 )
 
 runs <- tuning_run('nn_mortality.R', runs_dir = 'D_tuning', sample = 0.05, flags = par)

@@ -115,6 +115,22 @@ predicted_log_mortality <- model %>% predict(X_test_1st)+predicted_log_mortality
 predicted_log_mortality <- predicted_log_mortality/length(id)
 
 NN_prediction<- cbind(pred_raw,predicted_log_mortality)
-NN_prediction<-NN_prediction %>% mutate(NN_mortality=exp(predicted_log_mortality))
+NN_prediction<-NN_prediction %>% mutate("NN_mortality"=exp(predicted_log_mortality[,1]))
 
 sample_n(NN_prediction,6)
+
+
+NN_prediction <- NN_prediction %>%
+  mutate(Diff = mortality-NN_mortality)
+
+library(viridis)
+NN_prediction_female <- filter(NN_prediction, Gender == "Female")
+ggplot(NN_prediction_female, aes(Age, Year, fill = Diff)) +
+  geom_tile() +
+  scale_fill_viridis(discrete=FALSE)
+
+
+NN_prediction_male <- filter(NN_prediction, Gender == "Male")
+ggplot(NN_prediction_male, aes(Age, Year, fill = Diff)) +
+  geom_tile() +
+  scale_fill_viridis(discrete=FALSE)

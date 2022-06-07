@@ -8,7 +8,8 @@ load("data/processed/Italy_HMD_df.RDA")
 HMD_df <- HMD_df %>%
   mutate("mortality" = Deaths / Exposure) %>%
   mutate("log_mortality" = log(mortality)) %>%
-  select(-c(Exposure, Deaths))
+  select(-c(Exposure, Deaths)) %>%
+  filter(Age >= 40)
 
 pred_raw <- dplyr::filter(HMD_df,Year%in%2006:2016)
 
@@ -26,7 +27,7 @@ HMD_df<-HMD_df %>% select(Gender_cat,Age_cat,Year,Gender,Age, log_mortality, mor
 
 
 
-training <-dplyr::filter(HMD_df,Year%in%1900:2005)
+training <-dplyr::filter(HMD_df,Year%in%1950:2005)
 
 col_vector <- c("Year","Age","Gender","log_mortality")
 Training<- training %>% select(one_of(col_vector))
@@ -85,6 +86,18 @@ par <- list(
   lr = c(0.05,0.1,0.15),                  # c(0.05,0.1,0.15),
   patience = c(35,45),              # c(35,45),
   pats = c(20,30),                  # c(20,30),
+  activation = c("relu")         # c("relu") 
+)
+
+par <- list( 
+  layers = c(4),                 # c(3,6,9),
+  dropout = c(0.02),             # c(0.01,0.03,0.05,0.07),
+  neurons = c(184),              # c(128,160,192,224,256)
+  epochs = c(300),               # 
+  batchsize = c(400),            # c(400,800,1200),
+  lr = c(0.12),                  # c(0.05,0.1,0.15),
+  patience = c(35),              # c(35,45),
+  pats = c(30),                  # c(20,30),
   activation = c("relu")         # c("relu") 
 )
 

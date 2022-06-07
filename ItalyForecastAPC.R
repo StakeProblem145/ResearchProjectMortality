@@ -13,6 +13,8 @@ CAN <- read.demogdata("Italy_Death_Rates_1x1.txt",
                       type="mortality",
                       label="Italy")
 
+setwd("C:/Users/Captain/Dropbox/Uni/ResearchProject/ResearchProjectMortality")
+
 # Set data ranges----
 ageRange <- 40:100
 yearRange <- 1950:2005
@@ -148,7 +150,7 @@ plot(M3fit, parametricbx = FALSE)
 
 
 ##### M3 #####
-M3for=forecast(M3fit,h=50,level=c(80,95),kt.method="iarima",kt.order=c(0,1,0),gc.order=c(1,0,0))
+M3for=forecast(M3fit,h=50,level=c(80,95),kt.method="iarima",kt.order=c(0,1,0),gc.order=c(0,1,0))
 
 # Plots des forecastings f?r kappa und gamma
 plot(M3for,cex.lab=1.5,cex.main=1.5,cex.axis=1.5,only.kt=TRUE)
@@ -162,29 +164,28 @@ M3for[["gc.f"]][["model"]][["aic"]]                    # AIC Wert f?r gamma
 
 
 
-library(viridis)
-
 M3for_df <- as.data.frame(as.table(M3for$rates))
 colnames(M3for_df) <- c("Age", "Year", "mx")
 
 M3for_df <- dplyr::filter(M3for_df,Year%in%2006:2016)
 M3for_df <- M3for_df[order(M3for_df$Age),]
 
-real_data <- filter(pred_raw, Gender == "Female")
+classicModelForcast <- filter(pred_raw, Gender == "Female")
 
 
-real_data$mx_for <- M3for_df$mx
+classicModelForcast$CLA_mortality <- M3for_df$mx
+
+
+classicModelForcast <- classicModelForcast %>%
+  mutate(CLA_diff_abs = mortality-CLA_mortality, CLA_diff_p = (mortality/CLA_mortality)-1)
+
 
 library(viridis)
 
-real_data <- real_data %>%
-  mutate(diff_abs = mortality-mx_for, diff_p = (mortality/mx_for)-1)
-
-
-ggplot(real_data, aes(Age, Year, fill = diff_abs)) +
+ggplot(classicModelForcast, aes(Age, Year, fill = CLA_diff_abs)) +
   geom_tile() +
   scale_fill_viridis(discrete=FALSE)
 
-ggplot(real_data, aes(Age, Year, fill = diff_p)) +
+ggplot(classicModelForcast, aes(Age, Year, fill = CLA_diff_p)) +
   geom_tile() +
   scale_fill_viridis(discrete=FALSE)

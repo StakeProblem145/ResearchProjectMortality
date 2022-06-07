@@ -101,6 +101,8 @@ par <- list(
   activation = c("relu")         # c("relu") 
 )
 
+# Fit also exists in StMoMo, therefore you have to detach 
+# detach("package:StMoMo", unload=TRUE)
 runs <- tuning_run('nn_mortality.R', runs_dir = 'D_tuning', sample = 0.05, flags = par)
 
 
@@ -121,6 +123,7 @@ path<-file.path(getwd(),id,"model.h5")
 model <- load_model_hdf5(path)
 summary(model)
 
+
 predicted_log_mortality<- replicate(dim(y_test_1st)[1], 0)
 
 
@@ -134,29 +137,30 @@ sample_n(NN_prediction,6)
 
 
 
-
-library(viridis)
-
 NN_prediction <- NN_prediction %>%
-  mutate(diff_abs = mortality-NN_mortality, diff_p = (mortality/NN_mortality)-1)
+  mutate(NN_diff_abs = mortality-NN_mortality, NN_diff_p = (mortality/NN_mortality)-1)
 
 
 NN_prediction_female <- filter(NN_prediction, Gender == "Female")
-ggplot(NN_prediction_female, aes(Age, Year, fill = diff_abs)) +
-  geom_tile() +
-  scale_fill_viridis(discrete=FALSE)
-
-ggplot(NN_prediction_female, aes(Age, Year, fill = diff_p)) +
-  geom_tile() +
-  scale_fill_viridis(discrete=FALSE)
-
-
 NN_prediction_male <- filter(NN_prediction, Gender == "Male")
-ggplot(NN_prediction_male, aes(Age, Year, fill = diff_abs)) +
+
+library(viridis)
+
+ggplot(NN_prediction_female, aes(Age, Year, fill = NN_diff_abs)) +
   geom_tile() +
   scale_fill_viridis(discrete=FALSE)
 
-ggplot(NN_prediction_male, aes(Age, Year, fill = diff_p)) +
+ggplot(NN_prediction_female, aes(Age, Year, fill = NN_diff_p)) +
+  geom_tile() +
+  scale_fill_viridis(discrete=FALSE)
+
+
+
+ggplot(NN_prediction_male, aes(Age, Year, fill = NN_diff_abs)) +
+  geom_tile() +
+  scale_fill_viridis(discrete=FALSE)
+
+ggplot(NN_prediction_male, aes(Age, Year, fill = NN_diff_p)) +
   geom_tile() +
   scale_fill_viridis(discrete=FALSE)
 

@@ -9,7 +9,7 @@ HMD_df <- HMD_df %>%
   mutate("mortality" = Deaths / Exposure) %>%
   mutate("log_mortality" = log(mortality)) %>%
   select(-c(Exposure, Deaths)) %>%
-  filter(., Age%in%30:100)
+  filter(Age >= 40)
 
 pred_raw <- dplyr::filter(HMD_df,Year%in%2006:2016)
 
@@ -90,18 +90,18 @@ par <- list(
 )
 
 par <- list( 
-  layers = c(9),                 # c(3,6,9),
-  dropout = c(0.05),             # c(0.01,0.03,0.05,0.07),
-  neurons = c(192),              # c(128,160,192,224,256)
-  epochs = c(250),               # 
+  layers = c(4),                 # c(3,6,9),
+  dropout = c(0.02),             # c(0.01,0.03,0.05,0.07),
+  neurons = c(184),              # c(128,160,192,224,256)
+  epochs = c(300),               # 
   batchsize = c(400),            # c(400,800,1200),
-  lr = c(0.05),                  # c(0.05,0.1,0.15),
+  lr = c(0.12),                  # c(0.05,0.1,0.15),
   patience = c(35),              # c(35,45),
   pats = c(30),                  # c(20,30),
   activation = c("relu")         # c("relu") 
 )
 
-runs <- tuning_run('nn_mortality.R', runs_dir = 'D_tuning', sample = 0.5, flags = par)
+runs <- tuning_run('nn_mortality.R', runs_dir = 'D_tuning', sample = 0.05, flags = par)
 
 
 
@@ -133,23 +133,30 @@ NN_prediction<-NN_prediction %>% mutate("NN_mortality"=exp(predicted_log_mortali
 sample_n(NN_prediction,6)
 
 
-NN_prediction <- NN_prediction %>%
-  mutate(diff_a = mortality-NN_mortality, diff_p = abs((mortality/NN_mortality)-1))
+
 
 library(viridis)
+
+NN_prediction <- NN_prediction %>%
+  mutate(diff_abs = mortality-NN_mortality, diff_p = (mortality/NN_mortality)-1)
+
+
 NN_prediction_female <- filter(NN_prediction, Gender == "Female")
-ggplot(NN_prediction_female, aes(Age, Year, fill = diff_a)) +
+ggplot(NN_prediction_female, aes(Age, Year, fill = diff_abs)) +
   geom_tile() +
   scale_fill_viridis(discrete=FALSE)
+
 ggplot(NN_prediction_female, aes(Age, Year, fill = diff_p)) +
   geom_tile() +
   scale_fill_viridis(discrete=FALSE)
 
 
 NN_prediction_male <- filter(NN_prediction, Gender == "Male")
-ggplot(NN_prediction_male, aes(Age, Year, fill = diff_a)) +
+ggplot(NN_prediction_male, aes(Age, Year, fill = diff_abs)) +
   geom_tile() +
   scale_fill_viridis(discrete=FALSE)
+
 ggplot(NN_prediction_male, aes(Age, Year, fill = diff_p)) +
   geom_tile() +
   scale_fill_viridis(discrete=FALSE)
+

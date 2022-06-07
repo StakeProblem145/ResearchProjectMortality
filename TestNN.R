@@ -13,6 +13,7 @@ HMD_df <- HMD_df %>%
   filter(Age >= 40)
 
 pred_raw <- dplyr::filter(HMD_df,Year%in%2006:2016)
+train_raw <- dplyr::filter(HMD_df,Year%in%1950:2005)
 
 
 HMD_df <- HMD_df %>%
@@ -125,46 +126,6 @@ runs <- tuning_run('nn_mortality.R', runs_dir = 'D_tuning', sample = 0.05, flags
 results <- ls_runs(order = metric_val_loss, decreasing= F, runs_dir = 'D_tuning')
 results <- select(results,-c(output))
 
-### saved results
-
-# original result
-original  <-   "D_tuning/2022-06-05T22-05-03Z"
-
-# original with different epochs
-original_epoch300  <-  "D_tuning/2022-06-06T16-42-02Z"
-original_epoch600  <-  "D_tuning/2022-06-06T21-10-23Z"
-
-#original with different layers
-original_layers2  <-  "D_tuning/2022-06-06T21-15-32Z"
-original_layers6  <-  "D_tuning/2022-06-06T21-18-55Z"
-
-#original with different dropouts
-original_dropout0.01  <-  "D_tuning/2022-06-07T08-00-22Z"
-original_dropout0.04  <-  "D_tuning/2022-06-07T08-04-15Z"
-
-#original with different neurons
-original_neurons124  <-   "D_tuning/2022-06-07T08-08-57Z"
-original_neurons200  <-   "D_tuning/2022-06-07T08-11-38Z"
-
-#original with different batchsizes
-original_batchsize200  <-   "D_tuning/2022-06-07T08-43-58Z"
-original_batchsize800  <-  "D_tuning/2022-06-07T08-46-09Z"
-
-#original with different lr
-original_lr0.06  <-  "D_tuning/2022-06-07T08-48-52Z"
-original_lr0.24  <-  "D_tuning/2022-06-07T08-53-05Z"
-
-#original with different patience
-original_patience25  <-  "D_tuning/2022-06-07T09-13-49Z"
-original_patience45  <-  "D_tuning/2022-06-07T09-16-20Z"
-
-#original with different pats
-original_pats20  <-  "D_tuning/2022-06-07T09-18-27Z" #better model
-original_pats40  <-  "D_tuning/2022-06-07T09-25-19Z"
-
-#original with different activation functions
-original_activisionlinear  <-  "D_tuning/2022-06-07T09-27-52Z"
-original_activationtanh  <-  "D_tuning/2022-06-07T09-30-27Z"
 
 #best result
 id <- results[1,1]
@@ -176,6 +137,30 @@ path<-file.path(getwd(),id,"model.h5")
 model <- load_model_hdf5(path)
 summary(model)
 
+
+####
+
+X_training <- training[,c("Year","Age","Gender")]
+X_training <- list(as.matrix(X_training$Year),as.matrix(X_training$Age),as.matrix(X_training$Gender))
+
+#### Prepare the output feature for the validation set
+
+y_training <- training[, "log_mortality"]
+y_training <- as.matrix(y_training)
+
+
+test_log_mortality <- model %>% predict(X_training)
+test_NN <- cbind(train_raw[,c("Year","Age","Gender")])
+test_NN$log_mortality <- y_training
+
+test_NN <- test_NN %>% 
+  mutate("mortality"=exp(log_mortality)) %>%
+  mutate("NN_mortality"=exp(test_log_mortality[,1]))
+test_NN$NN_log_mortality <- test_log_mortality
+
+
+
+#### Prediction / Forecast
 
 predicted_log_mortality<- replicate(dim(y_test_1st)[1], 0)
 
@@ -190,11 +175,6 @@ sample_n(NN_prediction,6)
 
 
 
-<<<<<<< HEAD
-=======
-
-
->>>>>>> 5667214e0581f8e2e65d3db1917ad06f57f83743
 NN_prediction <- NN_prediction %>%
   mutate(NN_diff_abs = mortality-NN_mortality, NN_diff_p = (mortality/NN_mortality)-1)
 
@@ -230,4 +210,3 @@ ggplot(test)+
 ggplot(test, aes(x = Age, y = mortality/NN_mortality-1, ymin=-0.25, ymax=0.25)) +
   geom_line()
 
-id

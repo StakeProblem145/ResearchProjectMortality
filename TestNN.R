@@ -170,6 +170,7 @@ id <- results[1,1]
 
 #### Load the best performing model
 
+path<-file.path(getwd(),id,"model.h5")
 model <- load_model_hdf5(path)
 summary(model)
 

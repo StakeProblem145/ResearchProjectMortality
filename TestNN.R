@@ -120,17 +120,30 @@ NN_prediction<-NN_prediction %>% mutate("NN_mortality"=exp(predicted_log_mortali
 sample_n(NN_prediction,6)
 
 
-NN_prediction <- NN_prediction %>%
-  mutate(Diff = mortality-NN_mortality)
+
 
 library(viridis)
+
+NN_prediction <- NN_prediction %>%
+  mutate(diff_abs = mortality-NN_mortality, diff_p = (mortality/NN_mortality)-1)
+
+
 NN_prediction_female <- filter(NN_prediction, Gender == "Female")
-ggplot(NN_prediction_female, aes(Age, Year, fill = Diff)) +
+ggplot(NN_prediction_female, aes(Age, Year, fill = diff_abs)) +
+  geom_tile() +
+  scale_fill_viridis(discrete=FALSE)
+
+ggplot(NN_prediction_female, aes(Age, Year, fill = diff_p)) +
   geom_tile() +
   scale_fill_viridis(discrete=FALSE)
 
 
 NN_prediction_male <- filter(NN_prediction, Gender == "Male")
-ggplot(NN_prediction_male, aes(Age, Year, fill = Diff)) +
+ggplot(NN_prediction_male, aes(Age, Year, fill = diff_abs)) +
   geom_tile() +
   scale_fill_viridis(discrete=FALSE)
+
+ggplot(NN_prediction_male, aes(Age, Year, fill = diff_p)) +
+  geom_tile() +
+  scale_fill_viridis(discrete=FALSE)
+

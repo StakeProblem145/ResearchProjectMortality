@@ -158,6 +158,9 @@ test_NN <- test_NN %>%
   mutate("NN_mortality"=exp(test_log_mortality[,1]))
 test_NN$NN_log_mortality <- test_log_mortality
 
+test_NN <- test_NN %>%
+  mutate(NN_diff_abs = mortality-NN_mortality, NN_diff_p = (mortality/NN_mortality)-1)
+
 
 
 #### Prediction / Forecast
@@ -209,4 +212,5 @@ ggplot(test)+
 
 ggplot(test, aes(x = Age, y = mortality/NN_mortality-1, ymin=-0.25, ymax=0.25)) +
   geom_line()
+
 

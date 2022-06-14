@@ -33,6 +33,7 @@ HMD_df<-HMD_df %>% select(Gender_cat,Age_cat,Year,Gender,Age, log_mortality, mor
 training <-dplyr::filter(HMD_df,Year%in%1950:2005)
 
 ### Year? and/or Age? as Training Data 
+
 #training <- training %>%
   #mutate(Year = Year*Year) 
   #mutate(Age= Age*Age) 
@@ -158,7 +159,7 @@ results <- select(results,-c(output))
 id <- results[1,1]
 
 #result with Year? and Age?
-year_squared_result = "D_tuning/2022-06-14T07-49-55Z"
+year_squared_result = "D_tuning/2022-06-14T10-00-16Z"
 
 
 #### Load the best performing model
@@ -212,7 +213,7 @@ NN_prediction <- NN_prediction %>%
   mutate(NN_diff_abs = mortality-NN_mortality, NN_diff_p = (mortality/NN_mortality)-1)
 
 
-NN_prediction_female <- filter(NN_prediction, Gender == "Female")
+NN_prediction_female <- filter(NN_prediction, Gender == "Female" & Age<90)
 NN_prediction_male <- filter(NN_prediction, Gender == "Male")
 
 library(viridis)

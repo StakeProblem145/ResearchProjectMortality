@@ -8,28 +8,38 @@ comparisonDF_NN_CLA <- left_join(NN_prediction_female, classicModelForcast) %>%
 sum(abs(comparisonDF_NN_CLA$NN_diff_p))
 sum(abs(comparisonDF_NN_CLA$CLA_diff_p))
 
+#O <- train_raw$De
+#E <- rates * d$e
+#dev <- sum(2 * (ifelse(O == 0, 0, O * log(O/E)) - (O - E)))
+#res <- sign(O - E) * sqrt(2 * (ifelse(O == 0, 0, O * log(O/E)) - (O - E)))
+
+
 
 ### Training Comparison
 
 #Fixed Year Comparison
 
-year <- 1975
-
-ggplot(filter(test_NN, Year == year)) +
-  geom_line(aes(x = Age, y = log(mortality), color = "real")) +
+year <- 1980
+filter_training_year <- filter(test_NN, Year == year, Gender == "Female")
+ggplot(filter_training_year) +
+  geom_point(aes(x = Age, y = log(mortality), color = "real")) +
   geom_line(aes(x = Age, y = log(NN_mortality), color = "NN")) 
 
 
-ggplot(filter(test_NN, Year == year)) +
+ggplot(filter_test) +
   geom_point(aes(Age, y = mortality/NN_diff_abs-1, color = "NN")) 
+
+
 
 
 #Fixed Age Comparison
 
-age <- 40
+age <- 80
 
-ggplot(filter(test_NN, Age == age)) +
-  geom_line(aes(x = Year, y = log(mortality), color = "real")) +
+
+filter_training_age <- filter(test_NN, Age == age, Gender == "Female")
+ggplot(filter_training_age) +
+  geom_point(aes(x = Year, y = log(mortality), color = "real")) +
   geom_line(aes(x = Year, y = log(NN_mortality), color = "NN")) 
 
 ggplot(filter(test_NN, Age == age)) +
@@ -56,9 +66,9 @@ ggplot(filter(comparisonDF_NN_CLA, Year == year)) +
 
 # Fixed Ages Comparison
 
-age <- 90
+age <- 70
 
-ggplot(filter(comparisonDF_NN_CLA, Age == age)) +
+ggplot(filter(comparisonDF_NN_CLA, Age == age )) +
   geom_line(aes(x = Year, y = log(mortality), color = "real")) +
   geom_line(aes(x = Year, y = log(NN_mortality), color = "NN")) +
   geom_line(aes(x = Year, y = log(CLA_mortality), color = "CLA"))

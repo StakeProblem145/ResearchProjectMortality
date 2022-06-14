@@ -3,6 +3,7 @@ library(data.table)
 library(keras)
 library(viridis)
 library(tfruns)
+library(scales)
 
 load("data/processed/Italy_HMD_df.RDA")
 
@@ -31,9 +32,15 @@ HMD_df<-HMD_df %>% select(Gender_cat,Age_cat,Year,Gender,Age, log_mortality, mor
 
 training <-dplyr::filter(HMD_df,Year%in%1950:2005)
 
+### Year? and/or Age? as Training Data 
+#training <- training %>%
+  #mutate(Year = Year*Year) 
+  #mutate(Age= Age*Age) 
+
 col_vector <- c("Year","Age","Gender","log_mortality")
 Training<- training %>% select(one_of(col_vector))
 Training <- data.table(Training)
+
 
 ### Bugged? Returns 50% of the Data Set...
 val<-splitstackshape::stratified(Training, c('Year','Age'), 0.3)
@@ -42,6 +49,12 @@ val<-splitstackshape::stratified(Training, c('Year','Age'), 0.3)
 #### prepare the input features for the validation set
 
 X_validation <- val[,c("Year","Age","Gender")]
+
+### Scaling the validation data according to the activation function
+#X_validation <- X_validation %>%
+  #mutate(Year = rescale(X_validation[, Year], to = c(0, 1))) %>%
+  #mutate(Age= rescale(X_validation[, Age], to = c(0, 1))) 
+
 X_val <- list(as.matrix(X_validation$Year),as.matrix(X_validation$Age),as.matrix(X_validation$Gender))
 
 #### Prepare the output feature for the validation set
@@ -55,7 +68,15 @@ train<-setdiff(Training,val)
 #### Prepare the input features to be fed into the neural nets and convert them into arrays
 
 X_training <- train[,c("Year","Age","Gender")]
+
+### Scaling the training data according to the activation function
+#X_training <- X_training %>%
+  #mutate(Year = rescale(X_training[, Year], to = c(0, 1))) %>%
+  #mutate(Age= rescale(X_training[, Age], to = c(0, 1))) 
+
 X_dev <- list(as.matrix(X_training$Year),as.matrix(X_training$Age),as.matrix(X_training$Gender))
+
+
 
 
 #### Prepare the output feature to be fed into the neural nets and convert it into array
@@ -70,6 +91,12 @@ test <- dplyr::filter(HMD_df,Year%in%2006:2016)
 #### Prepare the input features for the test dataset and convert them into arrays
 
 X_test <- test[,c("Year","Age","Gender")]
+
+### Scaling the test data according to the activation function
+#X_test <- X_test %>%
+  #mutate(Year = rescale(X_test[, Year], to = c(0, 1))) %>%
+  #mutate(Age= rescale(X_test[, Age], to = c(0, 1))) 
+
 X_test_1st <- list(as.matrix(X_test$Year),as.matrix(X_test$Age),as.matrix(X_test$Gender))
 
 
@@ -105,8 +132,8 @@ par2 <- list(
 
 par <- list( 
   layers = c(4),                 # c(3,6,9),
-  dropout = c(0.02),             # c(0.01,0.03,0.05,0.07),
-  neurons = c(184),              # c(128,160,192,224,256)
+  dropout = c(0.04),             # c(0.01,0.03,0.05,0.07),
+  neurons = c(128),              # c(128,160,192,224,256)
   epochs = c(300),               # 
   batchsize = c(400),            # c(400,800,1200),
   lr = c(0.12),                  # c(0.05,0.1,0.15),
@@ -129,6 +156,9 @@ results <- select(results,-c(output))
 
 #best result
 id <- results[1,1]
+
+#result with Year? and Age?
+year_squared_result = "D_tuning/2022-06-14T07-49-55Z"
 
 
 #### Load the best performing model

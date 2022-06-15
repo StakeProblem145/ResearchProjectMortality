@@ -1,4 +1,34 @@
 library(tidyverse)
+library(viridis)
+
+NN_prediction_female <- filter(testForecastData, Gender == "Female" & Age<90)
+NN_prediction_male <- filter(testForecastData, Gender == "Male")
+
+ggplot(NN_prediction_female, aes(Age, Year, fill = NN_diff_abs)) +
+  geom_tile() +
+  scale_fill_viridis(discrete=FALSE)
+
+ggplot(NN_prediction_female, aes(Age, Year, fill = NN_diff_p)) +
+  geom_tile() +
+  scale_fill_viridis(discrete=FALSE)
+
+
+
+ggplot(NN_prediction_male, aes(Age, Year, fill = NN_diff_abs)) +
+  geom_tile() +
+  scale_fill_viridis(discrete=FALSE)
+
+ggplot(NN_prediction_male, aes(Age, Year, fill = NN_diff_p)) +
+  geom_tile() +
+  scale_fill_viridis(discrete=FALSE)
+
+predProcessed <- filter(NN_prediction_female, Year == 2006)
+ggplot(predProcessed)+
+  geom_line(aes(x = Age, y = log_mortality), color = "blue") +
+  geom_line(aes(x = Age, y = log(NN_mortality)), color = "red")
+
+ggplot(predProcessed, aes(x = Age, y = mortality/NN_mortality-1, ymin=-0.25, ymax=0.25)) +
+  geom_line()
 
 comparisonDF_NN_CLA <- left_join(NN_prediction_female, classicModelForcast) %>%
   select(-c("V1"))

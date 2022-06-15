@@ -5,6 +5,11 @@ library(viridis)
 library(tfruns)
 library(scales)
 
+# Prediction Dataset for Forecast
+# Training Dataset to train the NN, split into
+# Fitting Dataset
+# Validation Dataset
+
 load("data/processed/Italy_HMD_df.RDA")
 
 HMD_df <- HMD_df %>%
@@ -37,39 +42,29 @@ fittingData <- setdiff(trainProcessed,validationData)
 
 #### prepare the input features for the validation set
 
-X_val <- validationData %>%
-  select(Year, Age, Gender)
-X_val <- list(as.matrix(X_val$Year),as.matrix(X_val$Age),as.matrix(X_val$Gender))
+selectXParameterList <- function(data) {
+  res <- data %>%
+    select(Year, Age, Gender)
+  return(list(as.matrix(res$Year),as.matrix(res$Age),as.matrix(res$Gender)))
+}
 
-#### Prepare the output feature for the validation set
+selectYParameterList <- function(data) {
+  res <- data %>%
+    select(log_mortality)
+  return(as.matrix(res))
+}
 
-y_val <- validationData %>%
-  select(log_mortality)
-y_val <- as.matrix(y_val)
+# Fitting Data set
+X_dev <- selectXParameterList(fittingData)
+y_dev <- selectYParameterList(fittingData)
 
-#### Prepare the input features to be fed into the neural nets and convert them into arrays
+# Validation Data set
+X_val <- selectXParameterList(validationData)
+y_val <- selectYParameterList(validationData)
 
-X_dev <- fittingData %>%
-  select(Year, Age, Gender)
-X_dev <- list(as.matrix(X_dev$Year),as.matrix(X_dev$Age),as.matrix(X_dev$Gender))
-
-#### Prepare the output feature to be fed into the neural nets and convert it into array
-
-y_dev <- fittingData %>%
-  select(log_mortality)
-y_dev <- as.matrix(y_dev)
-
-#### Prepare the input features for the test dataset and convert them into arrays
-
-X_test_1st <- predProcessed %>%
-  select(Year, Age, Gender)
-X_test_1st <- list(as.matrix(X_test_1st$Year),as.matrix(X_test_1st$Age),as.matrix(X_test_1st$Gender))
-
-#### Prepare the output feature for the test dataset and convert them into arrays
-y_test_1st <- predProcessed %>%
-  select(log_mortality)
-y_test_1st <- as.matrix(y_test_1st)
-
+# Test Data set (Forecast)
+X_test_1st <- selectXParameterList(predProcessed)
+y_test_1st <- selectYParameterList(predProcessed)
 
 
 par <- list( 
@@ -89,96 +84,86 @@ par <- list(
 runs <- tuning_run('nn_mortality.R', runs_dir = 'D_tuning', sample = 0.05, flags = par)
 
 
-
 #### After the training we rank the performance of all hyperparameter search runs by validation loss in ascending order.
 
-results <- ls_runs(order = metric_val_loss, decreasing = F, runs_dir = 'D_tuning')
-results <- select(results,-c(output))
+selectBestRun <- function() {
+  results <- ls_runs(order = metric_val_loss, decreasing = F, runs_dir = 'D_tuning')
+  results <- select(results,-c(output))
+  return(results[1,1])
+}
 
-
-#best result
-id <- results[1,1]
+selectLastRun <- function() {
+  results <- ls_runs(runs_dir = 'D_tuning')
+  results <- select(results,-c(output))
+  return(results[1,1])
+}
 
 #### Load the best performing model
 
-path<-file.path(getwd(),id,"model.h5")
+id <- selectBestRun()
+path <- file.path(getwd(),id,"model.h5")
 model <- load_model_hdf5(path)
 summary(model)
 
 
-####
+#### Prediction on Training Period
+X_training <- selectXParameterList(trainProcessed)
 
-X_training <- trainProcessed[,c("Year","Age","Gender")]
-X_training <- list(as.matrix(X_training$Year),as.matrix(X_training$Age),as.matrix(X_training$Gender))
+testLogMortality <- model %>% predict(X_training)
 
-#### Prepare the output feature for the validation set
-
-y_training <- trainProcessed[, "log_mortality"]
-y_training <- as.matrix(y_training)
-
-
-test_log_mortality <- model %>% predict(X_training)
-test_NN <- cbind(train_raw[,c("Year","Age","Gender")])
-test_NN$log_mortality <- y_training
-
-test_NN <- test_NN %>% 
-  mutate("mortality"=exp(log_mortality)) %>%
-  mutate("NN_mortality"=exp(test_log_mortality[,1]))
-test_NN$NN_log_mortality <- test_log_mortality
-
-test_NN <- test_NN %>%
-  mutate(NN_diff_abs = mortality-NN_mortality, NN_diff_p = (mortality/NN_mortality)-1)
+testTrainingData <- train_raw %>%
+  mutate("NN_mortality"= exp(testLogMortality[,1])) %>%
+  mutate("NN_log_mortality" = testLogMortality[,1])
 
 
+#### Prediction on Forecast Period
+predictedLogMortality <- model %>% predict(X_test_1st)
 
-#### Prediction / Forecast
+testForecastData <- pred_raw %>% 
+  mutate("NN_mortality"= exp(predictedLogMortality[,1])) %>%
+  mutate("NN_log_mortality" = predictedLogMortality[,1])
 
-predicted_log_mortality<- replicate(dim(y_test_1st)[1], 0)
-
-
-predicted_log_mortality <- model %>% predict(X_test_1st)+predicted_log_mortality
-predicted_log_mortality <- predicted_log_mortality/length(id)
-
-NN_prediction<- cbind(pred_raw,predicted_log_mortality)
-NN_prediction<-NN_prediction %>% mutate("NN_mortality"=exp(predicted_log_mortality[,1]))
-
-sample_n(NN_prediction,6)
+sample_n(testForecastData,6)
 
 
+#### Prediction to infinity and beyond
+xToInfinity <- list(Year = 2017:2077, Age = 40:100, Gender = 0:1)
+xToInfinity <- expand.grid(xToInfinity)
 
-NN_prediction <- NN_prediction %>%
-  mutate(NN_diff_abs = mortality-NN_mortality, NN_diff_p = (mortality/NN_mortality)-1)
+test <- selectXParameterList(xToInfinity)
 
+infinityLogMortality <- model %>% predict(selectXParameterList(xToInfinity))
 
-NN_prediction_female <- filter(NN_prediction, Gender == "Female" & Age<90)
-NN_prediction_male <- filter(NN_prediction, Gender == "Male")
+testInfinityData$Gender[testInfinityData$Gender == 0] <- "Female"
+testInfinityData$Gender[testInfinityData$Gender == 1] <- "Male"
 
-library(viridis)
+testInfinityData <- xToInfinity %>% 
+  mutate("NN_mortality"= exp(infinityLogMortality[,1])) %>%
+  mutate("NN_log_mortality" = infinityLogMortality[,1])
 
-ggplot(NN_prediction_female, aes(Age, Year, fill = NN_diff_abs)) +
-  geom_tile() +
-  scale_fill_viridis(discrete=FALSE)
-
-ggplot(NN_prediction_female, aes(Age, Year, fill = NN_diff_p)) +
-  geom_tile() +
-  scale_fill_viridis(discrete=FALSE)
+sample_n(testInfinityData,6)
 
 
 
-ggplot(NN_prediction_male, aes(Age, Year, fill = NN_diff_abs)) +
-  geom_tile() +
-  scale_fill_viridis(discrete=FALSE)
+#### Create Deviances and Residuals
+createDevAndRes <- function(data) {
+  #dev <- sum(2 * (ifelse(O == 0, 0, O * log(O/E)) - (O - E)))
+  #res <- sign(O - E) * sqrt(2 * (ifelse(O == 0, 0, O * log(O/E)) - (O - E)))
+  data <- data %>%
+    mutate(NN_diff_abs = mortality-NN_mortality, NN_diff_p = (mortality/NN_mortality)-1) %>%
+    mutate(Pred_Deaths = Exposure*NN_mortality) %>%
+    mutate(Dev_Deaths = 2 * (ifelse(Deaths == 0, 0, Deaths * log(Deaths/Pred_Deaths)) - (Deaths - Pred_Deaths))) %>%
+    mutate(Dev_mortality = 2 * (ifelse(mortality == 0, 0, mortality * log(mortality/NN_mortality)) - (mortality - NN_mortality))) %>%
+    mutate(Res_Deaths = sign(Deaths - Pred_Deaths) * sqrt(Dev_Deaths)) %>%
+    mutate(Res_mortality = sign(mortality - NN_mortality) * sqrt(Dev_mortality))
+  return(data)
+}
 
-ggplot(NN_prediction_male, aes(Age, Year, fill = NN_diff_p)) +
-  geom_tile() +
-  scale_fill_viridis(discrete=FALSE)
+testTrainingData <- createDevAndRes(testTrainingData)
+testForecastData <- createDevAndRes(testForecastData)
 
-predProcessed <- filter(NN_prediction_female, Year == 2006)
-ggplot(predProcessed)+
-  geom_line(aes(x = Age, y = log_mortality), color = "blue") +
-  geom_line(aes(x = Age, y = log(NN_mortality)), color = "red")
 
-ggplot(predProcessed, aes(x = Age, y = mortality/NN_mortality-1, ymin=-0.25, ymax=0.25)) +
-  geom_line()
+
+
 
 

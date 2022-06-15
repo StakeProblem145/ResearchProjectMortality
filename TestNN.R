@@ -10,126 +10,67 @@ load("data/processed/Italy_HMD_df.RDA")
 HMD_df <- HMD_df %>%
   mutate("mortality" = Deaths / Exposure) %>%
   mutate("log_mortality" = log(mortality)) %>%
-  select(-c(Exposure, Deaths)) %>%
   filter(Age >= 40)
 
 pred_raw <- dplyr::filter(HMD_df,Year%in%2006:2016)
 train_raw <- dplyr::filter(HMD_df,Year%in%1950:2005)
 
 
-HMD_df <- HMD_df %>%
+hmdProcessed <- HMD_df %>%
   mutate("Gender_cat" = factor(Gender), "Age_cat" = factor(Age)) %>%
   mutate(Gender = as.integer(Gender), Age = as.integer(Age))
 
-### convert the integer or index starting from 0
-HMD_df$Gender <- HMD_df$Gender-1
-
+# Convert the integer or index starting from 0
+hmdProcessed$Gender <- hmdProcessed$Gender-1
 # Convert the datatype of the feature Year into numeric.
-HMD_df$Year <- as.numeric(as.character(HMD_df$Year))
-HMD_df<-HMD_df %>% select(Gender_cat,Age_cat,Year,Gender,Age, log_mortality, mortality)
+hmdProcessed$Year <- as.numeric(as.character(hmdProcessed$Year))
 
 
 
-training <-dplyr::filter(HMD_df,Year%in%1950:2005)
-
-### Year? and/or Age? as Training Data 
-
-#training <- training %>%
-  #mutate(Year = Year*Year) 
-  #mutate(Age= Age*Age) 
-
-col_vector <- c("Year","Age","Gender","log_mortality")
-Training<- training %>% select(one_of(col_vector))
-Training <- data.table(Training)
-
+predProcessed <- dplyr::filter(hmdProcessed,Year%in%2006:2016)
+trainProcessed <- dplyr::filter(hmdProcessed,Year%in%1950:2005)
+trainProcessed <- data.table(trainProcessed)
 
 ### Bugged? Returns 50% of the Data Set...
-val<-splitstackshape::stratified(Training, c('Year','Age'), 0.3)
-
+validationData <- splitstackshape::stratified(trainProcessed, c('Year','Age'), 0.3)
+fittingData <- setdiff(trainProcessed,validationData)
 
 #### prepare the input features for the validation set
 
-X_validation <- val[,c("Year","Age","Gender")]
-
-### Scaling the validation data according to the activation function
-#X_validation <- X_validation %>%
-  #mutate(Year = rescale(X_validation[, Year], to = c(0, 1))) %>%
-  #mutate(Age= rescale(X_validation[, Age], to = c(0, 1))) 
-
-X_val <- list(as.matrix(X_validation$Year),as.matrix(X_validation$Age),as.matrix(X_validation$Gender))
+X_val <- validationData %>%
+  select(Year, Age, Gender)
+X_val <- list(as.matrix(X_val$Year),as.matrix(X_val$Age),as.matrix(X_val$Gender))
 
 #### Prepare the output feature for the validation set
 
-y_validation <- val[, "log_mortality"]
-y_val <- as.matrix(y_validation)
-
-
-train<-setdiff(Training,val)
+y_val <- validationData %>%
+  select(log_mortality)
+y_val <- as.matrix(y_val)
 
 #### Prepare the input features to be fed into the neural nets and convert them into arrays
 
-X_training <- train[,c("Year","Age","Gender")]
-
-### Scaling the training data according to the activation function
-#X_training <- X_training %>%
-  #mutate(Year = rescale(X_training[, Year], to = c(0, 1))) %>%
-  #mutate(Age= rescale(X_training[, Age], to = c(0, 1))) 
-
-X_dev <- list(as.matrix(X_training$Year),as.matrix(X_training$Age),as.matrix(X_training$Gender))
-
-
-
+X_dev <- fittingData %>%
+  select(Year, Age, Gender)
+X_dev <- list(as.matrix(X_dev$Year),as.matrix(X_dev$Age),as.matrix(X_dev$Gender))
 
 #### Prepare the output feature to be fed into the neural nets and convert it into array
 
-y_training <- train[, "log_mortality"]
-y_dev <- as.matrix(y_training)
-
-
-#### Select the test set (2006 to 2016)
-test <- dplyr::filter(HMD_df,Year%in%2006:2016)
+y_dev <- fittingData %>%
+  select(log_mortality)
+y_dev <- as.matrix(y_dev)
 
 #### Prepare the input features for the test dataset and convert them into arrays
 
-X_test <- test[,c("Year","Age","Gender")]
-
-### Scaling the test data according to the activation function
-#X_test <- X_test %>%
-  #mutate(Year = rescale(X_test[, Year], to = c(0, 1))) %>%
-  #mutate(Age= rescale(X_test[, Age], to = c(0, 1))) 
-
-X_test_1st <- list(as.matrix(X_test$Year),as.matrix(X_test$Age),as.matrix(X_test$Gender))
-
+X_test_1st <- predProcessed %>%
+  select(Year, Age, Gender)
+X_test_1st <- list(as.matrix(X_test_1st$Year),as.matrix(X_test_1st$Age),as.matrix(X_test_1st$Gender))
 
 #### Prepare the output feature for the test dataset and convert them into arrays
-y_test <- test[, "log_mortality"]
-y_test_1st <- as.matrix(y_test)
+y_test_1st <- predProcessed %>%
+  select(log_mortality)
+y_test_1st <- as.matrix(y_test_1st)
 
 
-
-par <- list( 
-  layers = c(3,6,9),                 # c(3,6,9),
-  dropout = c(0.01,0.03,0.05,0.07),             # c(0.01,0.03,0.05,0.07),
-  neurons = c(128,160,192,224,256),              # c(128,160,192,224,256)
-  epochs = c(250),               # 
-  batchsize = c(400,800,1200),            # c(400,800,1200),
-  lr = c(0.05,0.1,0.15),                  # c(0.05,0.1,0.15),
-  patience = c(35,45),              # c(35,45),
-  pats = c(20,30),                  # c(20,30),
-  activation = c("relu")         # c("relu") 
-)
-
-par2 <- list( 
-  layers = c(2,4,8),                 # c(3,6,9),
-  dropout = c(0.02,0.04,0.08),             # c(0.01,0.03,0.05,0.07),
-  neurons = c(64,84,164,184,256),              # c(128,160,192,224,256)
-  epochs = c(150.300),               # 
-  batchsize = c(400,800,1200),            # c(400,800,1200),
-  lr = c(0.02,0.04,0.08,0.12),                  # c(0.05,0.1,0.15),
-  patience = c(35,50),              # c(35,45),
-  pats = c(20,30),                  # c(20,30),
-  activation = c("relu", "tanh")         # c("relu") 
-)
 
 par <- list( 
   layers = c(4),                 # c(3,6,9),
@@ -151,16 +92,12 @@ runs <- tuning_run('nn_mortality.R', runs_dir = 'D_tuning', sample = 0.05, flags
 
 #### After the training we rank the performance of all hyperparameter search runs by validation loss in ascending order.
 
-results <- ls_runs(order = metric_val_loss, decreasing= F, runs_dir = 'D_tuning')
+results <- ls_runs(order = metric_val_loss, decreasing = F, runs_dir = 'D_tuning')
 results <- select(results,-c(output))
 
 
 #best result
 id <- results[1,1]
-
-#result with Year? and Age?
-year_squared_result = "D_tuning/2022-06-14T10-00-16Z"
-
 
 #### Load the best performing model
 
@@ -171,12 +108,12 @@ summary(model)
 
 ####
 
-X_training <- training[,c("Year","Age","Gender")]
+X_training <- trainProcessed[,c("Year","Age","Gender")]
 X_training <- list(as.matrix(X_training$Year),as.matrix(X_training$Age),as.matrix(X_training$Gender))
 
 #### Prepare the output feature for the validation set
 
-y_training <- training[, "log_mortality"]
+y_training <- trainProcessed[, "log_mortality"]
 y_training <- as.matrix(y_training)
 
 
@@ -236,12 +173,12 @@ ggplot(NN_prediction_male, aes(Age, Year, fill = NN_diff_p)) +
   geom_tile() +
   scale_fill_viridis(discrete=FALSE)
 
-test <- filter(NN_prediction_female, Year == 2006)
-ggplot(test)+
+predProcessed <- filter(NN_prediction_female, Year == 2006)
+ggplot(predProcessed)+
   geom_line(aes(x = Age, y = log_mortality), color = "blue") +
   geom_line(aes(x = Age, y = log(NN_mortality)), color = "red")
 
-ggplot(test, aes(x = Age, y = mortality/NN_mortality-1, ymin=-0.25, ymax=0.25)) +
+ggplot(predProcessed, aes(x = Age, y = mortality/NN_mortality-1, ymin=-0.25, ymax=0.25)) +
   geom_line()
 
 

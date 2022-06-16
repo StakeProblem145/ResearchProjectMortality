@@ -17,8 +17,8 @@ HMD_df <- HMD_df %>%
   mutate("log_mortality" = log(mortality)) %>%
   filter(Age >= 40)
 
-pred_raw <- dplyr::filter(HMD_df,Year%in%2006:2016)
-train_raw <- dplyr::filter(HMD_df,Year%in%1950:2005)
+predRaw <- dplyr::filter(HMD_df,Year%in%2006:2016)
+trainRaw <- dplyr::filter(HMD_df,Year%in%1950:2005)
 
 
 hmdProcessed <- HMD_df %>%
@@ -89,18 +89,18 @@ runs <- tuning_run('nn_mortality.R', runs_dir = 'D_tuning', sample = 0.05, flags
 selectBestRun <- function() {
   results <- ls_runs(order = metric_val_loss, decreasing = F, runs_dir = 'D_tuning')
   results <- select(results,-c(output))
-  return(results[1,1])
+  return(results[1,])
 }
 
 selectLastRun <- function() {
   results <- ls_runs(runs_dir = 'D_tuning')
   results <- select(results,-c(output))
-  return(results[1,1])
+  return(results[1,])
 }
 
 #### Load the best performing model
 
-id <- selectBestRun()
+id <- selectBestRun()[,1]
 path <- file.path(getwd(),id,"model.h5")
 model <- load_model_hdf5(path)
 summary(model)
@@ -109,17 +109,17 @@ summary(model)
 #### Prediction on Training Period
 X_training <- selectXParameterList(trainProcessed)
 
-testLogMortality <- model %>% predict(X_training)
+trainingLogMortality <- model %>% predict(X_training)
 
-testTrainingData <- train_raw %>%
-  mutate("NN_mortality"= exp(testLogMortality[,1])) %>%
-  mutate("NN_log_mortality" = testLogMortality[,1])
+testTrainingData <- trainRaw %>%
+  mutate("NN_mortality"= exp(trainingLogMortality[,1])) %>%
+  mutate("NN_log_mortality" = trainingLogMortality[,1])
 
 
 #### Prediction on Forecast Period
 predictedLogMortality <- model %>% predict(X_test_1st)
 
-testForecastData <- pred_raw %>% 
+testForecastData <- predRaw %>% 
   mutate("NN_mortality"= exp(predictedLogMortality[,1])) %>%
   mutate("NN_log_mortality" = predictedLogMortality[,1])
 
@@ -130,16 +130,14 @@ sample_n(testForecastData,6)
 xToInfinity <- list(Year = 2017:2077, Age = 40:100, Gender = 0:1)
 xToInfinity <- expand.grid(xToInfinity)
 
-test <- selectXParameterList(xToInfinity)
-
 infinityLogMortality <- model %>% predict(selectXParameterList(xToInfinity))
-
-testInfinityData$Gender[testInfinityData$Gender == 0] <- "Female"
-testInfinityData$Gender[testInfinityData$Gender == 1] <- "Male"
 
 testInfinityData <- xToInfinity %>% 
   mutate("NN_mortality"= exp(infinityLogMortality[,1])) %>%
   mutate("NN_log_mortality" = infinityLogMortality[,1])
+
+testInfinityData$Gender[testInfinityData$Gender == 0] <- "Female"
+testInfinityData$Gender[testInfinityData$Gender == 1] <- "Male"
 
 sample_n(testInfinityData,6)
 

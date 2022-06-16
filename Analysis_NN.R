@@ -1,8 +1,6 @@
 library(tidyverse)
+library(plotly)
 library(viridis)
-
-NN_prediction_female <- filter(testForecastData, Gender == "Female" & Age<90)
-NN_prediction_male <- filter(testForecastData, Gender == "Male")
 
 
 heatmapAgeYear <- function(dataSet, fillParameter, gender, limitFillParameter) {
@@ -11,116 +9,118 @@ heatmapAgeYear <- function(dataSet, fillParameter, gender, limitFillParameter) {
       mutate(across(!!fillParameter, ~ ifelse(. <= limitFillParameter[1], limitFillParameter[1], .))) %>%
       mutate(across(!!fillParameter, ~ ifelse(. >= limitFillParameter[2], limitFillParameter[2], .)))
   }
-
   ggplot(filter(dataSet, Gender == gender), aes_string("Year", "Age", fill = fillParameter)) +
     geom_tile() +
-    scale_fill_gradient2(low = "red", mid = "white", high = "blue")
+    scale_fill_gradient2(low = "red", mid = "white", high = "blue") +
+    ggtitle(paste(gender, fillParameter))
 }
 
+
+plane3dPlotAgeYearResDeaths <- function(dataSet, gender, limitFillParameter) {
+  if(hasArg(limitFillParameter)) {
+    dataSet <- dataSet %>%
+      mutate(across(Res_Deaths, ~ ifelse(. <= limitFillParameter[1], limitFillParameter[1], .))) %>%
+      mutate(across(Res_Deaths, ~ ifelse(. >= limitFillParameter[2], limitFillParameter[2], .)))
+  }
+  plot_ly(data = filter(dataSet, Gender == gender), x = ~Year, y = ~Age, z = ~Res_Deaths) %>%
+    add_trace(type = "mesh3d", intensity = ~Res_Deaths, colors = colorRamp(c("blue", "lightblue", "chartreuse3", "yellow", "red")))
+}
+
+
+plotCrudeRatesPerAge <- function(dataSetNn, year, gender, moreDataSets) {
+  plot <- ggplot(filter(dataSetNn, Gender == gender & Year == year))+
+    geom_line(aes(x = Age, y = log_mortality, color = "Observed")) +
+    geom_line(aes(x = Age, y = NN_log_mortality, color = "Neural Network")) +
+    ggtitle(paste(gender, year))
+  if(hasArg(moreDataSets)) {
+    for (model in moreDataSets) {
+      plot <- plot +
+        geom_line(data = model, aes(x = Age, y = log_mortality))
+    }
+  }
+  return(plot)
+} 
+
+plotCrudeRatesPerYear <- function(dataSetNn, age, gender, moreDataSets) {
+  plot <- ggplot(filter(dataSetNn, Gender == gender & Age == age))+
+    geom_line(aes(x = Year, y = log_mortality, color = "Observed")) +
+    geom_line(aes(x = Year, y = NN_log_mortality, color = "Neural Network")) +
+    ggtitle(paste(gender, age))
+  if(hasArg(moreDataSets)) {
+    for (model in moreDataSets) {
+      plot <- plot +
+        geom_line(data = model, aes(x = Year, y = log_mortality))
+    }
+  }
+  return(plot)
+} 
+
+
+plotParameterPerAge <- function(dataSet, parameter, year, gender, lineType = "Point"){
+  plot <- ggplot(filter(dataSet, Gender == gender & Year == year), aes_string(x = "Age", y = parameter)) +
+    ggtitle(paste(gender, year))
+  if(lineType == "Line") {
+    plot <- plot +
+      geom_line()
+  } else {
+    plot <- plot +
+      geom_point()
+  }
+  return(plot)
+}
+
+plotParameterPerYear <- function(dataSet, parameter, age, gender, lineType = "Point"){
+  plot <- ggplot(filter(dataSet, Gender == gender & Age == age), aes_string(x = "Year", y = parameter)) +
+    ggtitle(paste(gender, age))
+  if(lineType == "Line") {
+    plot <- plot +
+      geom_line()
+  } else {
+    plot <- plot +
+      geom_point()
+  }
+  return(plot)
+}
+
+
+
 heatmapAgeYear(testTrainingData, "Res_Deaths", "Female", c(-10,10))
+heatmapAgeYear(testTrainingData, "Res_Deaths", "Male", c(-10,10))
 
-ggplot(testTrainingData, aes(Age, Year, fill = Res_mortality)) +
-  geom_tile() +
-  scale_fill_viridis(discrete=FALSE)
+heatmapAgeYear(testForecastData, "Res_Deaths", "Female", c(-20,20))
+heatmapAgeYear(testForecastData, "Res_Deaths", "Male", c(-20,20))
 
-ggplot(NN_prediction_female, aes(Age, Year, fill = NN_diff_p)) +
-  geom_tile() +
-  scale_fill_viridis(discrete=FALSE)
+plane3dPlotAgeYearResDeaths(testTrainingData, "Female")
+plane3dPlotAgeYearResDeaths(testTrainingData, "Male")
 
+plane3dPlotAgeYearResDeaths(testForecastData, "Female")
+plane3dPlotAgeYearResDeaths(testForecastData, "Male")
 
+plotCrudeRatesPerAge(testTrainingData, 2001, "Female")
+plotCrudeRatesPerAge(testTrainingData, 2001, "Male")
 
-ggplot(NN_prediction_male, aes(Age, Year, fill = NN_diff_abs)) +
-  geom_tile() +
-  scale_fill_viridis(discrete=FALSE)
-
-ggplot(NN_prediction_male, aes(Age, Year, fill = NN_diff_p)) +
-  geom_tile() +
-  scale_fill_viridis(discrete=FALSE)
-
-predProcessed <- filter(NN_prediction_female, Year == 2006)
-ggplot(predProcessed)+
-  geom_line(aes(x = Age, y = log_mortality), color = "blue") +
-  geom_line(aes(x = Age, y = log(NN_mortality)), color = "red")
-
-ggplot(predProcessed, aes(x = Age, y = mortality/NN_mortality-1, ymin=-0.25, ymax=0.25)) +
-  geom_line()
-
-comparisonDF_NN_CLA <- left_join(NN_prediction_female, classicModelForcast) %>%
-  select(-c("V1"))
+plotCrudeRatesPerYear(testTrainingData, 75, "Female")
+plotCrudeRatesPerYear(testTrainingData, 75, "Male")
 
 
+plotCrudeRatesPerAge(testForecastData, 2015, "Female")
+plotCrudeRatesPerAge(testForecastData, 2015, "Male")
 
-sum(abs(comparisonDF_NN_CLA$NN_diff_p))
-sum(abs(comparisonDF_NN_CLA$CLA_diff_p))
-
-#O <- train_raw$De
-#E <- rates * d$e
-#dev <- sum(2 * (ifelse(O == 0, 0, O * log(O/E)) - (O - E)))
-#res <- sign(O - E) * sqrt(2 * (ifelse(O == 0, 0, O * log(O/E)) - (O - E)))
+plotCrudeRatesPerYear(testForecastData, 75, "Female")
+plotCrudeRatesPerYear(testForecastData, 75, "Male")
 
 
+plotParameterPerAge(testTrainingData, "Res_Deaths", 2001, "Female")
+plotParameterPerAge(testTrainingData, "Res_Deaths", 2001, "Male")
 
-### Training Comparison
-
-#Fixed Year Comparison
-
-year <- 1980
-filter_training_year <- filter(test_NN, Year == year, Gender == "Female")
-ggplot(filter_training_year) +
-  geom_point(aes(x = Age, y = log(mortality), color = "real")) +
-  geom_line(aes(x = Age, y = log(NN_mortality), color = "NN")) 
+plotParameterPerYear(testTrainingData, "Res_Deaths", 75, "Female")
+plotParameterPerYear(testTrainingData, "Res_Deaths", 75, "Male")
 
 
-ggplot(filter_test) +
-  geom_point(aes(Age, y = mortality/NN_diff_abs-1, color = "NN")) 
+plotParameterPerAge(testForecastData, "Res_Deaths", 2015, "Female")
+plotParameterPerAge(testForecastData, "Res_Deaths", 2015, "Male")
 
-
-
-
-#Fixed Age Comparison
-
-age <- 80
-
-
-filter_training_age <- filter(test_NN, Age == age, Gender == "Female")
-ggplot(filter_training_age) +
-  geom_point(aes(x = Year, y = log(mortality), color = "real")) +
-  geom_line(aes(x = Year, y = log(NN_mortality), color = "NN")) 
-
-ggplot(filter(test_NN, Age == age)) +
-  geom_point(aes(Year, y = mortality/NN_diff_abs-1, color = "NN"))
-
- 
-
-### Forecast Comparison
-
-# Fixed Year Comparison
-
-year <- 2008
-
-ggplot(filter(comparisonDF_NN_CLA, Year == year)) +
-  geom_line(aes(x = Age, y = log(mortality), color = "real")) +
-  geom_line(aes(x = Age, y = log(NN_mortality), color = "NN")) +
-  geom_line(aes(x = Age, y = log(CLA_mortality), color = "CLA"))
-
-
-ggplot(filter(comparisonDF_NN_CLA, Year == year)) +
-  geom_point(aes(Age, y = mortality/NN_diff_abs-1, color = "NN")) +
-  geom_point(aes(Age, y = mortality/CLA_diff_abs-1, color = "CLA")) 
-
-
-# Fixed Ages Comparison
-
-age <- 70
-
-ggplot(filter(comparisonDF_NN_CLA, Age == age )) +
-  geom_line(aes(x = Year, y = log(mortality), color = "real")) +
-  geom_line(aes(x = Year, y = log(NN_mortality), color = "NN")) +
-  geom_line(aes(x = Year, y = log(CLA_mortality), color = "CLA"))
-
-ggplot(filter(comparisonDF_NN_CLA, Age == age)) +
-  geom_point(aes(Year, y = mortality/NN_diff_abs-1, color = "NN")) +
-  geom_point(aes(Year, y = mortality/CLA_diff_abs-1, color = "CLA")) 
-
+plotParameterPerYear(testForecastData, "Res_Deaths", 75, "Female")
+plotParameterPerYear(testForecastData, "Res_Deaths", 75, "Male")
 
 

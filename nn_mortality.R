@@ -1,3 +1,4 @@
+
 FLAGS <- flags(
   flag_integer('layers', 3),
   flag_numeric('dropout', 0.05),
@@ -55,9 +56,21 @@ build_model <- function() {
   model <- keras_model(inputs=c(Year,Age,Gender),outputs=c(main_output))
   
   
+  ### custom loss function
+  
+  custom_loss_deaths <- function(Exposure){
+    custom_loss <- function(y_true, y_pred){
+      # convert tensors to R objects
+      K <- backend()
+      return(keras$losses$poisson(y_true*Exposure,y_pred*Exposure)-K$log(exp(lgamma(y_true*Exposure + 1))))
+    }
+  }
+  
+  ### Compile model
+  
   model %>% compile(
-    optimizer_adam(learning_rate = FLAGS$lr),
-    loss='mse',
+    optimizer_adam(learning_rate = FLAGS$lr, clipvalue = 0.5),
+    loss='poisson',  #custom_loss_deaths(Exposure)
     metrics=c('mae')
   )
   model

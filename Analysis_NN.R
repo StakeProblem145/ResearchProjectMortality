@@ -4,7 +4,22 @@ library(viridis)
 NN_prediction_female <- filter(testForecastData, Gender == "Female" & Age<90)
 NN_prediction_male <- filter(testForecastData, Gender == "Male")
 
-ggplot(NN_prediction_female, aes(Age, Year, fill = NN_diff_abs)) +
+
+heatmapAgeYear <- function(dataSet, fillParameter, gender, limitFillParameter) {
+  if(hasArg(limitFillParameter)) {
+    dataSet <- dataSet %>%
+      mutate(across(!!fillParameter, ~ ifelse(. <= limitFillParameter[1], limitFillParameter[1], .))) %>%
+      mutate(across(!!fillParameter, ~ ifelse(. >= limitFillParameter[2], limitFillParameter[2], .)))
+  }
+
+  ggplot(filter(dataSet, Gender == gender), aes_string("Year", "Age", fill = fillParameter)) +
+    geom_tile() +
+    scale_fill_gradient2(low = "red", mid = "white", high = "blue")
+}
+
+heatmapAgeYear(testTrainingData, "Res_Deaths", "Female", c(-10,10))
+
+ggplot(testTrainingData, aes(Age, Year, fill = Res_mortality)) +
   geom_tile() +
   scale_fill_viridis(discrete=FALSE)
 

@@ -27,11 +27,26 @@ plane3dPlotAgeYearResDeaths <- function(dataSet, gender, limitFillParameter) {
 }
 
 
-plotCrudeRatesPerAge <- function(dataSetNn, year, gender, moreDataSets) {
+plotCrudeRatesPerAge <- function(dataSetNn, year, gender, xlim, ylim, moreDataSets) {
   plot <- ggplot(filter(dataSetNn, Gender == gender & Year == year))+
-    geom_line(aes(x = Age, y = log_mortality, color = "Observed")) +
     geom_line(aes(x = Age, y = NN_log_mortality, color = "Neural Network")) +
     ggtitle(paste(gender, year))
+  
+  if("log_mortality" %in% names(dataSetNn)){
+    plot <- plot +
+      geom_line(aes(x = Age, y = log_mortality, color = "Observed"))
+  }
+  
+  if(hasArg(xlim)) {
+    plot <- plot +
+      xlim(xlim)
+  }
+  
+  if(hasArg(ylim)) {
+    plot <- plot +
+      ylim(ylim)
+  }
+  
   if(hasArg(moreDataSets)) {
     for (model in moreDataSets) {
       plot <- plot +
@@ -41,11 +56,27 @@ plotCrudeRatesPerAge <- function(dataSetNn, year, gender, moreDataSets) {
   return(plot)
 } 
 
-plotCrudeRatesPerYear <- function(dataSetNn, age, gender, moreDataSets) {
+
+plotCrudeRatesPerYear <- function(dataSetNn, age, gender, xlim, ylim, moreDataSets) {
   plot <- ggplot(filter(dataSetNn, Gender == gender & Age == age))+
-    geom_line(aes(x = Year, y = log_mortality, color = "Observed")) +
     geom_line(aes(x = Year, y = NN_log_mortality, color = "Neural Network")) +
     ggtitle(paste(gender, age))
+  
+  if("log_mortality" %in% names(dataSetNn)){
+    plot <- plot +
+      geom_line(aes(x = Year, y = log_mortality, color = "Observed"))
+  }
+  
+  if(hasArg(xlim)) {
+    plot <- plot +
+      xlim(xlim)
+  }
+  
+  if(hasArg(ylim)) {
+    plot <- plot +
+      ylim(ylim)
+  }
+  
   if(hasArg(moreDataSets)) {
     for (model in moreDataSets) {
       plot <- plot +
@@ -53,12 +84,55 @@ plotCrudeRatesPerYear <- function(dataSetNn, age, gender, moreDataSets) {
     }
   }
   return(plot)
-} 
+}
 
 
-plotParameterPerAge <- function(dataSet, parameter, year, gender, lineType = "Point"){
+plotCrudeRatesPerCohort <- function(dataSetNn, cohort, gender, xlim, ylim, moreDataSets) {
+  dataSetNn <- dataSetNn %>%
+    mutate(Cohort = Year - Age)
+  plot <- ggplot(filter(dataSetNn, Gender == gender & Cohort == cohort))+
+    geom_line(aes(x = Age, y = NN_log_mortality, color = "Neural Network")) +
+    ggtitle(paste(gender, cohort)) +
+    xlim(c(40,100))
+  
+  if("log_mortality" %in% names(dataSetNn)){
+    plot <- plot +
+      geom_line(aes(x = Age, y = log_mortality, color = "Observed"))
+  }
+  
+  if(hasArg(xlim)) {
+    plot <- plot +
+      xlim(xlim)
+  }
+  
+  if(hasArg(ylim)) {
+    plot <- plot +
+      ylim(ylim)
+  }
+  
+  if(hasArg(moreDataSets)) {
+    for (model in moreDataSets) {
+      plot <- plot +
+        geom_line(data = model, aes(x = Age, y = log_mortality))
+    }
+  }
+  return(plot)
+}
+
+plotParameterPerAge <- function(dataSet, parameter, year, gender, xlim, ylim, lineType = "Point"){
   plot <- ggplot(filter(dataSet, Gender == gender & Year == year), aes_string(x = "Age", y = parameter)) +
     ggtitle(paste(gender, year))
+  
+  if(hasArg(xlim)) {
+    plot <- plot +
+      xlim(xlim)
+  }
+  
+  if(hasArg(ylim)) {
+    plot <- plot +
+      ylim(ylim)
+  }
+  
   if(lineType == "Line") {
     plot <- plot +
       geom_line()
@@ -69,9 +143,20 @@ plotParameterPerAge <- function(dataSet, parameter, year, gender, lineType = "Po
   return(plot)
 }
 
-plotParameterPerYear <- function(dataSet, parameter, age, gender, lineType = "Point"){
+plotParameterPerYear <- function(dataSet, parameter, age, gender, xlim, ylim, lineType = "Point"){
   plot <- ggplot(filter(dataSet, Gender == gender & Age == age), aes_string(x = "Year", y = parameter)) +
     ggtitle(paste(gender, age))
+  
+  if(hasArg(xlim)) {
+    plot <- plot +
+      xlim(xlim)
+  }
+  
+  if(hasArg(ylim)) {
+    plot <- plot +
+      ylim(ylim)
+  }
+  
   if(lineType == "Line") {
     plot <- plot +
       geom_line()
@@ -83,33 +168,61 @@ plotParameterPerYear <- function(dataSet, parameter, age, gender, lineType = "Po
 }
 
 
-
+### Heatmaps Res_Death
 heatmapAgeYear(testTrainingData, "Res_Deaths", "Female", c(-10,10))
 heatmapAgeYear(testTrainingData, "Res_Deaths", "Male", c(-10,10))
 
 heatmapAgeYear(testForecastData, "Res_Deaths", "Female", c(-20,20))
 heatmapAgeYear(testForecastData, "Res_Deaths", "Male", c(-20,20))
 
+
+
+### 3d Plots Res_Death
 plane3dPlotAgeYearResDeaths(testTrainingData, "Female")
 plane3dPlotAgeYearResDeaths(testTrainingData, "Male")
 
 plane3dPlotAgeYearResDeaths(testForecastData, "Female")
 plane3dPlotAgeYearResDeaths(testForecastData, "Male")
 
+
+### Training Period
+# Function can be used like this:
+# plotCrudeRatesPerAge(testTrainingData, 2001, "Female", xlim = c(50,90), ylim = c(-5,-1))
 plotCrudeRatesPerAge(testTrainingData, 2001, "Female")
 plotCrudeRatesPerAge(testTrainingData, 2001, "Male")
 
 plotCrudeRatesPerYear(testTrainingData, 75, "Female")
 plotCrudeRatesPerYear(testTrainingData, 75, "Male")
 
+plotCrudeRatesPerCohort(testTrainingData, 1930, "Female")
+plotCrudeRatesPerCohort(testTrainingData, 1930, "Male")
 
+
+### Forecast Period
 plotCrudeRatesPerAge(testForecastData, 2015, "Female")
 plotCrudeRatesPerAge(testForecastData, 2015, "Male")
 
 plotCrudeRatesPerYear(testForecastData, 75, "Female")
 plotCrudeRatesPerYear(testForecastData, 75, "Male")
 
+plotCrudeRatesPerCohort(testForecastData, 1930, "Female")
+plotCrudeRatesPerCohort(testForecastData, 1930, "Male")
 
+
+### Infinity Period
+plotCrudeRatesPerAge(testInfinityData, 2030, "Female")
+plotCrudeRatesPerAge(testInfinityData, 2030, "Male")
+
+plotCrudeRatesPerYear(testInfinityData, 75, "Female")
+plotCrudeRatesPerYear(testInfinityData, 75, "Male")
+
+plotCrudeRatesPerCohort(testInfinityData, 1950, "Female")
+plotCrudeRatesPerCohort(testInfinityData, 1950, "Male")
+
+
+
+### Parameter Analysis
+#plotParameterPerAge(testTrainingData, "Res_Deaths", 2001, "Female", ylim = c(-4,4))
 plotParameterPerAge(testTrainingData, "Res_Deaths", 2001, "Female")
 plotParameterPerAge(testTrainingData, "Res_Deaths", 2001, "Male")
 

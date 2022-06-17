@@ -17,8 +17,12 @@ HMD_df <- HMD_df %>%
   mutate("log_mortality" = log(mortality)) %>%
   filter(Age >= 40)
 
-predRaw <- dplyr::filter(HMD_df,Year%in%2006:2016)
-trainRaw <- dplyr::filter(HMD_df,Year%in%1950:2005)
+
+yearPredRange <- c(2006:2016)
+yeraTrainRange <- c(1950:2005)
+
+predRaw <- dplyr::filter(HMD_df,Year%in%yearPredRange)
+trainRaw <- dplyr::filter(HMD_df,Year%in%yeraTrainRange)
 
 
 hmdProcessed <- HMD_df %>%
@@ -32,8 +36,8 @@ hmdProcessed$Year <- as.numeric(as.character(hmdProcessed$Year))
 
 
 
-predProcessed <- dplyr::filter(hmdProcessed,Year%in%2006:2016)
-trainProcessed <- dplyr::filter(hmdProcessed,Year%in%1950:2005)
+predProcessed <- dplyr::filter(hmdProcessed,Year%in%yearPredRange)
+trainProcessed <- dplyr::filter(hmdProcessed,Year%in%yeraTrainRange)
 trainProcessed <- data.table(trainProcessed)
 
 ### Bugged? Returns 50% of the Data Set...
@@ -68,11 +72,11 @@ y_test_1st <- selectYParameterList(predProcessed)
 
 
 par <- list( 
-  layers = c(3),                 # c(3,6,9),
+  layers = c(2,4,8,12,24),                 # c(3,6,9),
   dropout = c(0.04),             # c(0.01,0.03,0.05,0.07),
-  neurons = c(128),              # c(128,160,192,224,256)
-  epochs = c(300),               # 
-  batchsize = c(400),            # c(400,800,1200),
+  neurons = c(8,64,128,164),              # c(128,160,192,224,256)
+  epochs = c(180,300),               # 
+  batchsize = c(100,200,400,600,800,1000),            # c(400,800,1200),
   lr = c(0.12),                  # c(0.05,0.1,0.15),
   patience = c(35),              # c(35,45),
   pats = c(20),                  # c(20,30),
@@ -81,7 +85,7 @@ par <- list(
 
 # Fit also exists in StMoMo, therefore you have to detach 
 # detach("package:StMoMo", unload=TRUE)
-runs <- tuning_run('nn_mortality.R', runs_dir = 'D_tuning', sample = 0.05, flags = par)
+runs <- tuning_run('nn_mortality.R', runs_dir = 'D_tuning', sample = 1, flags = par)
 
 
 #### After the training we rank the performance of all hyperparameter search runs by validation loss in ascending order.
@@ -99,6 +103,8 @@ selectLastRun <- function() {
 }
 
 #### Load the best performing model
+results <- ls_runs(runs_dir = 'D_tuning') %>%
+  select(-c(output))
 
 id <- selectLastRun()[,1]
 path <- file.path(getwd(),id,"model.h5")

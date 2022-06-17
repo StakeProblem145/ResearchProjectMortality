@@ -30,3 +30,4 @@ ResearchProjectMortality.Rproj
 model.h5
 *D_tuning/**
 /D_tuning/
+results_nn.RDA

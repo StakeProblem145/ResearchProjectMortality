@@ -57,6 +57,38 @@ plotCrudeRatesPerAge <- function(dataSetNn, year, gender, xlim, ylim, moreDataSe
 } 
 
 
+plotCrudeRatesPerAgeBothGender <- function(dataSetNn, year, xlim, ylim, moreDataSets) {
+  plot <- ggplot(filter(dataSetNn, Year == year))+
+    geom_line(data = ~filter(.x, Gender == "Female"), aes(x = Age, y = NN_log_mortality, color = "Female Neural Network")) +
+    geom_line(data = ~filter(.x, Gender == "Male"), aes(x = Age, y = NN_log_mortality, color = "Male Neural Network")) +
+    ggtitle(paste(year))
+  
+  if("log_mortality" %in% names(dataSetNn)){
+    plot <- plot +
+      geom_line(data = ~filter(.x, Gender == "Female"), aes(x = Age, y = log_mortality, color = "Female Observed")) +
+      geom_line(data = ~filter(.x, Gender == "Male"), aes(x = Age, y = log_mortality, color = "Male Observed"))
+  }
+  
+  if(hasArg(xlim)) {
+    plot <- plot +
+      xlim(xlim)
+  }
+  
+  if(hasArg(ylim)) {
+    plot <- plot +
+      ylim(ylim)
+  }
+  
+  if(hasArg(moreDataSets)) {
+    for (model in moreDataSets) {
+      plot <- plot +
+        geom_line(data = model, aes(x = Age, y = log_mortality))
+    }
+  }
+  return(plot)
+} 
+
+
 plotCrudeRatesPerYear <- function(dataSetNn, age, gender, xlim, ylim, moreDataSets) {
   plot <- ggplot(filter(dataSetNn, Gender == gender & Age == age))+
     geom_line(aes(x = Year, y = NN_log_mortality, color = "Neural Network")) +
@@ -65,6 +97,38 @@ plotCrudeRatesPerYear <- function(dataSetNn, age, gender, xlim, ylim, moreDataSe
   if("log_mortality" %in% names(dataSetNn)){
     plot <- plot +
       geom_line(aes(x = Year, y = log_mortality, color = "Observed"))
+  }
+  
+  if(hasArg(xlim)) {
+    plot <- plot +
+      xlim(xlim)
+  }
+  
+  if(hasArg(ylim)) {
+    plot <- plot +
+      ylim(ylim)
+  }
+  
+  if(hasArg(moreDataSets)) {
+    for (model in moreDataSets) {
+      plot <- plot +
+        geom_line(data = model, aes(x = Year, y = log_mortality))
+    }
+  }
+  return(plot)
+}
+
+
+plotCrudeRatesPerYearBothGender <- function(dataSetNn, age, xlim, ylim, moreDataSets) {
+  plot <- ggplot(filter(dataSetNn, Age == age))+
+    geom_line(data = ~filter(.x, Gender == "Female"), aes(x = Year, y = NN_log_mortality, color = "Female Neural Network")) +
+    geom_line(data = ~filter(.x, Gender == "Male"), aes(x = Year, y = NN_log_mortality, color = "Male Neural Network")) +
+    ggtitle(paste(age))
+  
+  if("log_mortality" %in% names(dataSetNn)){
+    plot <- plot +
+      geom_line(data = ~filter(.x, Gender == "Female"), aes(x = Year, y = log_mortality, color = "Female Observed")) +
+      geom_line(data = ~filter(.x, Gender == "Male"), aes(x = Year, y = log_mortality, color = "Male Observed"))
   }
   
   if(hasArg(xlim)) {
@@ -119,6 +183,7 @@ plotCrudeRatesPerCohort <- function(dataSetNn, cohort, gender, xlim, ylim, moreD
   return(plot)
 }
 
+
 plotParameterPerAge <- function(dataSet, parameter, year, gender, xlim, ylim, lineType = "Point"){
   plot <- ggplot(filter(dataSet, Gender == gender & Year == year), aes_string(x = "Age", y = parameter)) +
     ggtitle(paste(gender, year))
@@ -142,6 +207,7 @@ plotParameterPerAge <- function(dataSet, parameter, year, gender, xlim, ylim, li
   }
   return(plot)
 }
+
 
 plotParameterPerYear <- function(dataSet, parameter, age, gender, xlim, ylim, lineType = "Point"){
   plot <- ggplot(filter(dataSet, Gender == gender & Age == age), aes_string(x = "Year", y = parameter)) +
@@ -197,6 +263,8 @@ plotCrudeRatesPerYear(testTrainingData, 75, "Male")
 plotCrudeRatesPerCohort(testTrainingData, 1930, "Female")
 plotCrudeRatesPerCohort(testTrainingData, 1930, "Male")
 
+plotCrudeRatesPerAgeBothGender(testTrainingData, 2001)
+plotCrudeRatesPerYearBothGender(testTrainingData, 75)
 
 ### Forecast Period
 plotCrudeRatesPerAge(testForecastData, 2015, "Female")
@@ -207,6 +275,9 @@ plotCrudeRatesPerYear(testForecastData, 75, "Male")
 
 plotCrudeRatesPerCohort(testForecastData, 1930, "Female")
 plotCrudeRatesPerCohort(testForecastData, 1930, "Male")
+
+plotCrudeRatesPerAgeBothGender(testForecastData, 2015)
+plotCrudeRatesPerYearBothGender(testForecastData, 75)
 
 
 ### Infinity Period

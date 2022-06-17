@@ -156,8 +156,7 @@ plotCrudeRatesPerCohort <- function(dataSetNn, cohort, gender, xlim, ylim, moreD
     mutate(Cohort = Year - Age)
   plot <- ggplot(filter(dataSetNn, Gender == gender & Cohort == cohort))+
     geom_line(aes(x = Age, y = NN_log_mortality, color = "Neural Network")) +
-    ggtitle(paste(gender, cohort)) +
-    xlim(c(40,100))
+    ggtitle(paste(gender, cohort))
   
   if("log_mortality" %in% names(dataSetNn)){
     plot <- plot +
@@ -251,6 +250,25 @@ plane3dPlotAgeYearResDeaths(testForecastData, "Female")
 plane3dPlotAgeYearResDeaths(testForecastData, "Male")
 
 
+
+
+
+### Full Period
+testFullRangeData <- rbind(testTrainingData, testForecastData, testInfinityData, fill=TRUE)
+
+plotCrudeRatesPerAge(testFullRangeData, 2001, "Female")
+plotCrudeRatesPerAge(testFullRangeData, 2001, "Male")
+
+plotCrudeRatesPerYear(testFullRangeData, 75, "Female")
+plotCrudeRatesPerYear(testFullRangeData, 75, "Male")
+
+plotCrudeRatesPerCohort(testFullRangeData, 1930, "Female")
+plotCrudeRatesPerCohort(testFullRangeData, 1930, "Male")
+
+plotCrudeRatesPerAgeBothGender(testFullRangeData, 2001)
+plotCrudeRatesPerYearBothGender(testFullRangeData, 75)
+
+
 ### Training Period
 # Function can be used like this:
 # plotCrudeRatesPerAge(testTrainingData, 2001, "Female", xlim = c(50,90), ylim = c(-5,-1))
@@ -290,6 +308,8 @@ plotCrudeRatesPerYear(testInfinityData, 75, "Male")
 plotCrudeRatesPerCohort(testInfinityData, 1950, "Female")
 plotCrudeRatesPerCohort(testInfinityData, 1950, "Male")
 
+plotCrudeRatesPerAgeBothGender(testInfinityData, 2030)
+plotCrudeRatesPerYearBothGender(testInfinityData, 75)
 
 
 ### Parameter Analysis

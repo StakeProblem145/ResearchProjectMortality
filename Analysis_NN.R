@@ -241,7 +241,6 @@ heatmapAgeYear(testForecastData, "Res_Deaths", "Female", c(-20,20))
 heatmapAgeYear(testForecastData, "Res_Deaths", "Male", c(-20,20))
 
 
-
 ### 3d Plots Res_Death
 plane3dPlotAgeYearResDeaths(testTrainingData, "Female")
 plane3dPlotAgeYearResDeaths(testTrainingData, "Male")
@@ -249,7 +248,13 @@ plane3dPlotAgeYearResDeaths(testTrainingData, "Male")
 plane3dPlotAgeYearResDeaths(testForecastData, "Female")
 plane3dPlotAgeYearResDeaths(testForecastData, "Male")
 
+testFullRangePeriod <- rbind(testTrainingData, testForecastData, fill=TRUE)
 
+heatmapAgeYear(testFullRangePeriod, "Res_Deaths", "Female", c(-20,20))
+heatmapAgeYear(testFullRangePeriod, "Res_Deaths", "Male", c(-20,20))
+
+plane3dPlotAgeYearResDeaths(testFullRangePeriod, "Female")
+plane3dPlotAgeYearResDeaths(testFullRangePeriod, "Male")
 
 
 

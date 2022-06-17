@@ -68,7 +68,7 @@ y_test_1st <- selectYParameterList(predProcessed)
 
 
 par <- list( 
-  layers = c(4),                 # c(3,6,9),
+  layers = c(3),                 # c(3,6,9),
   dropout = c(0.04),             # c(0.01,0.03,0.05,0.07),
   neurons = c(128),              # c(128,160,192,224,256)
   epochs = c(300),               # 
@@ -100,7 +100,7 @@ selectLastRun <- function() {
 
 #### Load the best performing model
 
-id <- selectBestRun()[,1]
+id <- selectLastRun()[,1]
 path <- file.path(getwd(),id,"model.h5")
 model <- load_model_hdf5(path)
 summary(model)

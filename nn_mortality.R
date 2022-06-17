@@ -69,8 +69,8 @@ build_model <- function() {
   ### Compile model
   
   model %>% compile(
-    optimizer_adam(learning_rate = FLAGS$lr, clipvalue = 0.5),
-    loss='poisson',  #custom_loss_deaths(Exposure)
+    optimizer_adam(learning_rate = FLAGS$lr),
+    loss='mse',  #custom_loss_deaths(Exposure)
     metrics=c('mae')
   )
   model
@@ -107,6 +107,8 @@ history <- model %>% fit(
 score <- model %>% evaluate(X_test_1st, y_test_1st, verbose = 0)
 
 save_model_hdf5(model, 'model.h5')
+
+results <- ls_runs(runs_dir = 'D_tuning')
 
 save(results, file = "results_nn.RDA")
 

@@ -150,7 +150,7 @@ plot(M3fit, parametricbx = FALSE)
 
 
 ##### M3 #####
-M3for=forecast(M3fit,h=50,level=c(80,95),kt.method="iarima",kt.order=c(0,1,0),gc.order=c(0,1,0))
+M3for=forecast(M3fit,h=72,level=c(80,95),kt.method="iarima",kt.order=c(0,1,0),gc.order=c(0,1,0))
 
 # Plots des forecastings f?r kappa und gamma
 plot(M3for,cex.lab=1.5,cex.main=1.5,cex.axis=1.5,only.kt=TRUE)
@@ -163,29 +163,16 @@ plot(M3for,cex.lab=1.5,cex.main=1.5,cex.axis=1.5,only.gc=TRUE)
 M3for[["gc.f"]][["model"]][["aic"]]                    # AIC Wert f?r gamma
 
 
+M3for_df <- rbind(as.data.frame(as.table(fitted(M3fit, "rates"))), as.data.frame(as.table(M3for$rates)))
+  
+colnames(M3for_df) <- c("Age", "Year", "CLA_mortality")
+M3for_df$Gender <- "Female"
+M3for_df$Year <- as.numeric(as.character(M3for_df$Year))
+M3for_df$Age <- as.numeric(as.character(M3for_df$Age))
+testClassicModelForcast <- M3for_df %>%
+  mutate(CLA_log_mortality = log(CLA_mortality))
 
-M3for_df <- as.data.frame(as.table(M3for$rates))
-colnames(M3for_df) <- c("Age", "Year", "mx")
-
-M3for_df <- dplyr::filter(M3for_df,Year%in%2006:2016)
-M3for_df <- M3for_df[order(M3for_df$Age),]
-
-classicModelForcast <- filter(pred_raw, Gender == "Female")
-
-
-classicModelForcast$CLA_mortality <- M3for_df$mx
-
-
-classicModelForcast <- classicModelForcast %>%
-  mutate(CLA_diff_abs = mortality-CLA_mortality, CLA_diff_p = (mortality/CLA_mortality)-1)
+test <- as.data.frame(as.table(fitted(M3fit, "rates")))
 
 
-library(viridis)
 
-ggplot(classicModelForcast, aes(Age, Year, fill = CLA_diff_abs)) +
-  geom_tile() +
-  scale_fill_viridis(discrete=FALSE)
-
-ggplot(classicModelForcast, aes(Age, Year, fill = CLA_diff_p)) +
-  geom_tile() +
-  scale_fill_viridis(discrete=FALSE)

@@ -72,11 +72,11 @@ y_test_1st <- selectYParameterList(predProcessed)
 
 
 par <- list( 
-  layers = c(2,4,8,12,24),                 # c(3,6,9),
+  layers = c(3,4,5,6),                 # c(3,6,9),
   dropout = c(0.04),             # c(0.01,0.03,0.05,0.07),
-  neurons = c(8,64,128,164),              # c(128,160,192,224,256)
-  epochs = c(180,300),               # 
-  batchsize = c(100,200,400,600,800,1000),            # c(400,800,1200),
+  neurons = c(100,128,160,180,200),              # c(128,160,192,224,256)
+  epochs = c(300),               # 
+  batchsize = c(100),            # c(400,800,1200),
   lr = c(0.12),                  # c(0.05,0.1,0.15),
   patience = c(35),              # c(35,45),
   pats = c(20),                  # c(20,30),
@@ -90,10 +90,10 @@ runs <- tuning_run('nn_mortality.R', runs_dir = 'D_tuning', sample = 1, flags = 
 
 #### After the training we rank the performance of all hyperparameter search runs by validation loss in ascending order.
 
-selectBestRun <- function() {
+selectBestRun <- function(number) {
   results <- ls_runs(order = metric_val_loss, decreasing = F, runs_dir = 'D_tuning')
   results <- select(results,-c(output))
-  return(results[1,])
+  return(results[number,])
 }
 
 selectLastRun <- function() {
@@ -106,7 +106,7 @@ selectLastRun <- function() {
 results <- ls_runs(runs_dir = 'D_tuning') %>%
   select(-c(output))
 
-id <- selectLastRun()[,1]
+id <- selectBestRun(1)[,1]
 path <- file.path(getwd(),id,"model.h5")
 model <- load_model_hdf5(path)
 summary(model)
@@ -164,10 +164,10 @@ createDevAndRes <- function(data) {
 }
 
 testTrainingData <- createDevAndRes(testTrainingData)
+sum(testTrainingData$Dev_Deaths)
+
 testForecastData <- createDevAndRes(testForecastData)
-
-
-
+sum(testForecastData$Dev_Deaths)
 
 
 

@@ -48,10 +48,8 @@ plotCrudeRatesPerAge <- function(dataSetNn, year, gender, xlim, ylim, moreDataSe
   }
   
   if(hasArg(moreDataSets)) {
-    for (model in moreDataSets) {
-      plot <- plot +
-        geom_line(data = model, aes(x = Age, y = log_mortality))
-    }
+    plot <- plot +
+      geom_line(data = filter(moreDataSets, Gender == gender & Year == year), aes(x = Age, y = CLA_log_mortality, color = "Classic Model"))
   }
   return(plot)
 } 
@@ -80,10 +78,9 @@ plotCrudeRatesPerAgeBothGender <- function(dataSetNn, year, xlim, ylim, moreData
   }
   
   if(hasArg(moreDataSets)) {
-    for (model in moreDataSets) {
-      plot <- plot +
-        geom_line(data = model, aes(x = Age, y = log_mortality))
-    }
+    plot <- plot +
+      geom_line(data = filter(moreDataSets, Gender == "Female" & Year == year), aes(x = Age, y = CLA_log_mortality, color = "Female Classic Model"))
+      #geom_line(data = filter(moreDataSets, Gender == "Male" & Year == year), aes(x = Age, y = CLA_log_mortality, color = "Male Classic Model"))
   }
   return(plot)
 } 
@@ -110,10 +107,8 @@ plotCrudeRatesPerYear <- function(dataSetNn, age, gender, xlim, ylim, moreDataSe
   }
   
   if(hasArg(moreDataSets)) {
-    for (model in moreDataSets) {
-      plot <- plot +
-        geom_line(data = model, aes(x = Year, y = log_mortality))
-    }
+    plot <- plot +
+      geom_line(data = filter(moreDataSets, Gender == gender & Age == age), aes(x = Year, y = CLA_log_mortality, color = "Classic Model"))
   }
   return(plot)
 }
@@ -142,10 +137,9 @@ plotCrudeRatesPerYearBothGender <- function(dataSetNn, age, xlim, ylim, moreData
   }
   
   if(hasArg(moreDataSets)) {
-    for (model in moreDataSets) {
-      plot <- plot +
-        geom_line(data = model, aes(x = Year, y = log_mortality))
-    }
+    plot <- plot +
+      geom_line(data = filter(moreDataSets, Gender == "Female" & Age == age), aes(x = Year, y = CLA_log_mortality, color = "Female Classic Model"))
+      #geom_line(data = filter(moreDataSets, Gender == "Male" & Age == age), aes(x = Year, y = CLA_log_mortality, color = "Male Classic Model"))
   }
   return(plot)
 }
@@ -174,10 +168,8 @@ plotCrudeRatesPerCohort <- function(dataSetNn, cohort, gender, xlim, ylim, moreD
   }
   
   if(hasArg(moreDataSets)) {
-    for (model in moreDataSets) {
-      plot <- plot +
-        geom_line(data = model, aes(x = Age, y = log_mortality))
-    }
+    plot <- plot +
+      geom_line(data = filter(moreDataSets, Gender == gender & Cohort == cohort), aes(x = Age, y = CLA_log_mortality, color = "Classic Model"))
   }
   return(plot)
 }
@@ -272,6 +264,11 @@ plotCrudeRatesPerCohort(testFullRangeData, 1930, "Male")
 
 plotCrudeRatesPerAgeBothGender(testFullRangeData, 2001)
 plotCrudeRatesPerYearBothGender(testFullRangeData, 75)
+
+plotCrudeRatesPerAgeBothGender(testFullRangeData, 2016)
+plotCrudeRatesPerYearBothGender(testFullRangeData, 75)
+
+plotCrudeRatesPerYearBothGender(testFullRangeData, 85, moreDataSets = testClassicModelForcast)
 
 
 ### Training Period

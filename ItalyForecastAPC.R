@@ -172,7 +172,7 @@ M3for_df$Age <- as.numeric(as.character(M3for_df$Age))
 testClassicModelForcast <- M3for_df %>%
   mutate(CLA_log_mortality = log(CLA_mortality))
 
-test <- as.data.frame(as.table(fitted(M3fit, "rates")))
+testClassicModelTraining <- as.data.frame(as.table(fitted(M3fit, "rates")))
 
 
 

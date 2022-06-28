@@ -72,11 +72,11 @@ y_test_1st <- selectYParameterList(predProcessed)
 
 
 par <- list( 
-  layers = c(3,4,5,6),                 # c(3,6,9),
+  layers = c(3,4,6,8),                 # c(3,6,9),
   dropout = c(0.04),             # c(0.01,0.03,0.05,0.07),
-  neurons = c(100,128,160,180,200),              # c(128,160,192,224,256)
+  neurons = c(128,160,200),              # c(128,160,192,224,256)
   epochs = c(300),               # 
-  batchsize = c(100),            # c(400,800,1200),
+  batchsize = c(100, 400),            # c(400,800,1200),
   lr = c(0.12),                  # c(0.05,0.1,0.15),
   patience = c(35),              # c(35,45),
   pats = c(20),                  # c(20,30),
@@ -106,7 +106,7 @@ selectLastRun <- function() {
 results <- ls_runs(runs_dir = 'D_tuning') %>%
   select(-c(output))
 
-id <- selectBestRun(1)[,1]
+id <- selectBestRun(2)[,1]
 path <- file.path(getwd(),id,"model.h5")
 model <- load_model_hdf5(path)
 summary(model)

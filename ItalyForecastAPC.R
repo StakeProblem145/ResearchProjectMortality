@@ -164,15 +164,15 @@ M3for[["gc.f"]][["model"]][["aic"]]                    # AIC Wert f?r gamma
 
 
 M3for_df <- rbind(as.data.frame(as.table(fitted(M3fit, "rates"))), as.data.frame(as.table(M3for$rates)))
-  
-colnames(M3for_df) <- c("Age", "Year", "CLA_mortality")
-M3for_df$Gender <- "Female"
-M3for_df$Year <- as.numeric(as.character(M3for_df$Year))
-M3for_df$Age <- as.numeric(as.character(M3for_df$Age))
-testClassicModelForcast <- M3for_df %>%
-  mutate(CLA_log_mortality = log(CLA_mortality))
-
 testClassicModelTraining <- as.data.frame(as.table(fitted(M3fit, "rates")))
+testClassicModelFullRange <- rbind(testClassicModelTraining, M3for_df)
+
+colnames(testClassicModelFullRange) <- c("Age", "Year", "CLA_mortality")
+testClassicModelFullRange$Gender <- "Female"
+testClassicModelFullRange$Year <- as.numeric(as.character(testClassicModelFullRange$Year))
+testClassicModelFullRange$Age <- as.numeric(as.character(testClassicModelFullRange$Age))
+testClassicModelFullRange <- testClassicModelFullRange %>%
+  mutate(CLA_log_mortality = log(CLA_mortality))
 
 
 

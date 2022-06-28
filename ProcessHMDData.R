@@ -6,7 +6,7 @@ library(tidyverse)
 
 
 ##### Exposure ####
-HMD_E <- fread("data/raw/Italy_Exposures_1x1.txt")
+HMD_E <- fread("data/raw/Japan_Exposure_1x1.txt")
 head(HMD_E)
 colnames(HMD_E)
 which(HMD_E$Age=="110+")
@@ -20,7 +20,7 @@ head(HMD_E)
 summary(HMD_E)
 
 ##### Deaths ####
-HMD_D <- fread("data/raw/Italy_Deaths_1x1.txt")
+HMD_D <- fread("data/raw/Japan_Deaths_1x1.txt")
 head(HMD_D)
 HMD_D[,Age:=as.numeric(Age)]
 
@@ -48,6 +48,8 @@ HMD_df$Exposure<-as.numeric(HMD_df$Exposure)
 HMD_df$Deaths<-as.numeric(HMD_df$Deaths)
 summary(HMD_df)
 
+Japan_HMD_df <- HMD_df
+
 remove(HMD_E)
 remove(HMD_D)
-save(HMD_df, file = "data/processed/HMD_df.RDA")
+save(HMD_df, file = "data/processed/Japan_HMD_df.RDA")

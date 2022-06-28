@@ -59,7 +59,8 @@ plotCrudeRatesPerAgeBothGender <- function(dataSetNn, year, xlim, ylim, moreData
   plot <- ggplot(filter(dataSetNn, Year == year))+
     geom_line(data = ~filter(.x, Gender == "Female"), aes(x = Age, y = NN_log_mortality, color = "Female Neural Network")) +
     geom_line(data = ~filter(.x, Gender == "Male"), aes(x = Age, y = NN_log_mortality, color = "Male Neural Network")) +
-    ggtitle(paste("Year", year))
+    ggtitle(paste("Year", year)) +
+    ylab("Log Mortality")
   
   if("log_mortality" %in% names(dataSetNn)){
     plot <- plot +
@@ -119,7 +120,7 @@ plotCrudeRatesPerYearBothGender <- function(dataSetNn, age, xlim, ylim, moreData
     geom_line(data = ~filter(.x, Gender == "Female"), aes(x = Year, y = NN_log_mortality, color = "Female Neural Network")) +
     geom_line(data = ~filter(.x, Gender == "Male"), aes(x = Year, y = NN_log_mortality, color = "Male Neural Network")) +
     ggtitle(paste("Age", age)) +
-    ylab("Log Mortailty")
+    ylab("Log Mortality")
   
   if("log_mortality" %in% names(dataSetNn)){
     plot <- plot +
@@ -342,7 +343,7 @@ b <- plotCrudeRatesPerYearBothGender(testFullRangeData, 70)
 c <- plotCrudeRatesPerYearBothGender(testFullRangeData, 80)
 d <- plotCrudeRatesPerYearBothGender(testFullRangeData, 90)
 combined <- a + b + c + d & theme(legend.position = "bottom")
-combined + plot_layout(guides = "collect")
+combined + plot_layout(guides = "collect") + plot_annotation(title = "Test")
 
 
 a <- plotCrudeRatesPerAgeBothGender(testFullRangeData, 2001)
@@ -350,4 +351,4 @@ b <- plotCrudeRatesPerAgeBothGender(testFullRangeData, 2006)
 c <- plotCrudeRatesPerAgeBothGender(testFullRangeData, 2011)
 d <- plotCrudeRatesPerAgeBothGender(testFullRangeData, 2016)
 combined <- a + b + c + d & theme(legend.position = "bottom")
-combined + plot_layout(guides = "collect")
+combined + plot_layout(guides = "collect") + plot_annotation(title = "Test")

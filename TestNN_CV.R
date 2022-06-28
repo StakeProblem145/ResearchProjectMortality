@@ -68,6 +68,11 @@ X_test_1st <- selectXParameterList(predProcessed)
 y_test_1st <- selectYParameterList(predProcessed)
 
 
+# Data Set to infinity and beyond
+xToInfinity <- list(Year = 2017:2077, Age = 40:100, Gender = 0:1)
+xToInfinity <- expand.grid(xToInfinity)
+
+
 
 par <- list( 
   layers = c(4),                 # c(3,6,9),
@@ -82,7 +87,6 @@ par <- list(
 )
 
 #### After the training we rank the performance of all hyperparameter search runs by validation loss in ascending order.
-
 selectBestRun <- function(number) {
   results <- ls_runs(order = metric_val_loss, decreasing = F, runs_dir = 'D_tuning')
   results <- select(results,-c(output))
@@ -101,18 +105,23 @@ ids <- 1:nrow(trainProcessed)
 predictedLogMortality_folds <- vector(mode="list", length=KFOLDS)
 predictedLogMortality <- vector(mode="list", length=1)
 
+infinityLogMortality_folds <- vector(mode="list", length=KFOLDS)
+infinityLogMortality <- vector(mode="list", length=1)
+
+# train and target data
 train <- trainProcessed
 target <- trainProcessed$log_mortality
 
-
-
+# create K-Folds
 folds <- createFolds(target, k=KFOLDS, list=TRUE, returnTrain=FALSE)
 
 
 
 for(fld in 1:length(folds))
 {
+  #ids for data split control
   controlID <- ids[folds[[fld]]]
+  
   
   dtrain         <- train[folds[[fld]]*-1,]
   dtraintarget   <- data.frame(log_mortality = target[folds[[fld]]*-1])
@@ -120,9 +129,9 @@ for(fld in 1:length(folds))
   dcontrol       <- train[folds[[fld]],]
   dcontroltarget <- data.frame(log_mortality = target[folds[[fld]]])
   
+  #feautures
   X_dev <- selectXParameterList(dtrain)
   y_dev <- selectYParameterList(dtraintarget)
-  
   
   X_val <- selectXParameterList(dcontrol)
   y_val <- selectYParameterList(dcontroltarget)
@@ -141,10 +150,16 @@ for(fld in 1:length(folds))
   path <- file.path(getwd(),id,"model.h5")
   model <- load_model_hdf5(path)
   
+  # Prediction on training period by validation data 
   ValLogMortality <- model %>% predict(X_val)
   
   #use K-folded model for the test prediction
   predictedLogMortality_folds[[fld]] <- model %>% predict(X_test_1st)
+  
+  #### use K-folded model for the Prediction to infinity and beyond
+  infinityLogMortality_folds[[fld]] <- model %>% predict(selectXParameterList(xToInfinity))
+  
+  
   
   
   #Prediction on training period by id
@@ -164,7 +179,7 @@ for(fld in 1:length(folds))
 
 
 #### Prediction on Training Period
-# first restore previous order of training data
+# restore previous order of training data
 trainingLogMortality <- trainingLogMortality[order(trainingLogMortality$ids),]
 testTrainingData <- trainRaw %>%
   mutate("NN_mortality"= exp(trainingLogMortality[,2])) %>%
@@ -173,8 +188,8 @@ testTrainingData <- trainRaw %>%
 
 
 ### Prediction  Forecast mortality as mean over K Folds
-y_pred <- as.data.frame(do.call(cbind, predictedLogMortality_folds))
-predictedLogMortality[[1]] <-  apply(y_pred, 1, mean)
+y_pred_test <- as.data.frame(do.call(cbind, predictedLogMortality_folds))
+predictedLogMortality[[1]] <-  apply(y_pred_test, 1, mean)
 
 testForecastData <- predRaw %>% 
   mutate("NN_mortality"= exp(predictedLogMortality[[1]])) %>%
@@ -183,15 +198,13 @@ testForecastData <- predRaw %>%
 sample_n(testForecastData,6)
 
 
-#### Prediction to infinity and beyond
-xToInfinity <- list(Year = 2017:2077, Age = 40:100, Gender = 0:1)
-xToInfinity <- expand.grid(xToInfinity)
-
-infinityLogMortality <- model %>% predict(selectXParameterList(xToInfinity))
+#### Prediction to infinity and beyond  as mean over K-Folds
+y_pred_infinity <- as.data.frame(do.call(cbind, infinityLogMortality_folds))
+infinityLogMortality[[1]] <-  apply(y_pred_infinity, 1, mean)
 
 testInfinityData <- xToInfinity %>% 
-  mutate("NN_mortality"= exp(infinityLogMortality[,1])) %>%
-  mutate("NN_log_mortality" = infinityLogMortality[,1])
+  mutate("NN_mortality"= exp(infinityLogMortality[[1]])) %>%
+  mutate("NN_log_mortality" = infinityLogMortality[[1]])
 
 testInfinityData$Gender[testInfinityData$Gender == 0] <- "Female"
 testInfinityData$Gender[testInfinityData$Gender == 1] <- "Male"

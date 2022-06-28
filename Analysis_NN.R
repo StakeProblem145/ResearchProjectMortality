@@ -1,7 +1,7 @@
 library(tidyverse)
 library(plotly)
 library(viridis)
-
+library(patchwork)
 
 heatmapAgeYear <- function(dataSet, fillParameter, gender, limitFillParameter) {
   if(hasArg(limitFillParameter)) {
@@ -59,7 +59,7 @@ plotCrudeRatesPerAgeBothGender <- function(dataSetNn, year, xlim, ylim, moreData
   plot <- ggplot(filter(dataSetNn, Year == year))+
     geom_line(data = ~filter(.x, Gender == "Female"), aes(x = Age, y = NN_log_mortality, color = "Female Neural Network")) +
     geom_line(data = ~filter(.x, Gender == "Male"), aes(x = Age, y = NN_log_mortality, color = "Male Neural Network")) +
-    ggtitle(paste(year))
+    ggtitle(paste("Year", year))
   
   if("log_mortality" %in% names(dataSetNn)){
     plot <- plot +
@@ -118,7 +118,8 @@ plotCrudeRatesPerYearBothGender <- function(dataSetNn, age, xlim, ylim, moreData
   plot <- ggplot(filter(dataSetNn, Age == age))+
     geom_line(data = ~filter(.x, Gender == "Female"), aes(x = Year, y = NN_log_mortality, color = "Female Neural Network")) +
     geom_line(data = ~filter(.x, Gender == "Male"), aes(x = Year, y = NN_log_mortality, color = "Male Neural Network")) +
-    ggtitle(paste(age))
+    ggtitle(paste("Age", age)) +
+    ylab("Log Mortailty")
   
   if("log_mortality" %in% names(dataSetNn)){
     plot <- plot +
@@ -249,7 +250,7 @@ plane3dPlotAgeYearResDeaths(testFullRangePeriod, "Female")
 plane3dPlotAgeYearResDeaths(testFullRangePeriod, "Male")
 
 
-
+##### Function Showcase ####
 ### Full Period
 testFullRangeData <- rbind(testTrainingData, testForecastData, testInfinityData, fill=TRUE)
 
@@ -269,6 +270,7 @@ plotCrudeRatesPerAgeBothGender(testFullRangeData, 2016)
 plotCrudeRatesPerYearBothGender(testFullRangeData, 75)
 
 plotCrudeRatesPerYearBothGender(testFullRangeData, 85, moreDataSets = testClassicModelForcast)
+
 
 
 ### Training Period
@@ -330,3 +332,22 @@ plotParameterPerYear(testForecastData, "Res_Deaths", 75, "Female")
 plotParameterPerYear(testForecastData, "Res_Deaths", 75, "Male")
 
 
+
+
+##### Ana #####
+testFullRangeData <- rbind(testTrainingData, testForecastData, testInfinityData, fill=TRUE)
+
+a <- plotCrudeRatesPerYearBothGender(testFullRangeData, 60)
+b <- plotCrudeRatesPerYearBothGender(testFullRangeData, 70)
+c <- plotCrudeRatesPerYearBothGender(testFullRangeData, 80)
+d <- plotCrudeRatesPerYearBothGender(testFullRangeData, 90)
+combined <- a + b + c + d & theme(legend.position = "bottom")
+combined + plot_layout(guides = "collect")
+
+
+a <- plotCrudeRatesPerAgeBothGender(testFullRangeData, 2001)
+b <- plotCrudeRatesPerAgeBothGender(testFullRangeData, 2006)
+c <- plotCrudeRatesPerAgeBothGender(testFullRangeData, 2011)
+d <- plotCrudeRatesPerAgeBothGender(testFullRangeData, 2016)
+combined <- a + b + c + d & theme(legend.position = "bottom")
+combined + plot_layout(guides = "collect")

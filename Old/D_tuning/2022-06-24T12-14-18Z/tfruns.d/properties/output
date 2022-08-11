@@ -1,0 +1,29 @@
+
+> FLAGS <- flags(
++   flag_integer('layers', 3),
++   flag_numeric('dropout', 0.05),
++   flag_integer('neurons', 128),
++   flag_integer('epochs', 50),
+ .... [TRUNCATED] 
+
+> build_model <- function() {
++   
++   Year <- layer_input(shape=c(1),dtype='float32',name='Year')
++   Age <- layer_input(shape=c(1),dtype='int32',nam .... [TRUNCATED] 
+
+> model <- build_model()
+
+> ##### the folowing two callback functions are used to control the training process by monitoring the validation loss
+> 
+> early_stop <- callback_ear .... [TRUNCATED] 
+
+> lr_reducer <- callback_reduce_lr_on_plateau(monitor = 'val_loss', factor = 0.1,
++                                             patience = FLAGS$pats, .... [TRUNCATED] 
+
+> ### Fit the neural network specified as above
+> 
+> history <- model %>% fit(
++   x  = X_dev, 
++   y  = y_dev,
++   batch_size = FLAGS$batchsize, 
++   .... [TRUNCATED] 

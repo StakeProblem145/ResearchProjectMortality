@@ -1,0 +1,11 @@
+{
+  "layers": 8,
+  "dropout": 0.04,
+  "neurons": 200,
+  "epochs": 300,
+  "lr": 0.12,
+  "patience": 35,
+  "pats": 20,
+  "batchsize": 400,
+  "activation": "relu"
+}
